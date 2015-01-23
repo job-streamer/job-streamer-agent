@@ -1,0 +1,49 @@
+(ns job-streamer.agent.connector
+  (:require [clojure.tools.logging :as log])
+  (:use [clojure.core.async :only [chan put! go-loop <! timeout]]
+        [environ.core :only [env]])
+  (:import [java.io ByteArrayOutputStream DataOutputStream File]
+           [java.net InetSocketAddress InetAddress]
+           [java.nio ByteBuffer]
+           [java.nio.file Files]
+           [java.nio.channels DatagramChannel]))
+
+(def notifier-channel (chan))
+(def port-cache (atom nil))
+
+(defn notify [port]
+  (let [baos (ByteArrayOutputStream.)
+        dos  (DataOutputStream. baos)
+        ch   (DatagramChannel/open)]
+    (try 
+      (doto dos
+        (.write (.getAddress (InetAddress/getLocalHost)) 0 4)
+        (.writeInt port))
+      (.. ch socket (setBroadcast true))
+      (.send ch
+        (ByteBuffer/wrap (.toByteArray baos))
+        (InetSocketAddress. "255.255.255.255" (or (env :control-bus-port) 45100)))
+      (log/info "Notify multicast.")
+      (finally (.close ch)))))
+
+(defn start [port]
+  (reset! port-cache port)
+  (go-loop []
+    (let [comm (<! notifier-channel)]
+      (if (= comm :stop)
+        (log/info "stop multicast.")
+        (do
+          (notify port)
+          (<! (timeout 10000))
+          (put! notifier-channel :continue)
+          (recur)))))
+  (put! notifier-channel :start))
+
+(defn restart []
+  (if @port-cache
+    (start @port-cache)
+    (throw (IllegalStateException.))))
+
+(defn stop []
+  (put! notifier-channel :stop))
+
