@@ -1,5 +1,4 @@
 body {
-    margin-top: 40px;
 }
 
 .main.content {
@@ -12,7 +11,7 @@ body {
     background-color: #fff;
     padding-right: 2em;
     padding-left: 2em;
-    padding-top: 80px;
+    padding-top: 60px;
 }
 
 .masthead.segment {
@@ -24,7 +23,7 @@ body {
 
 .masthead.segment h1 {
     text-align: center;
-    font-size: 3em;
+    font-size: 4em;
     margin: 0px;
     padding-bottom: 0em;
     
