@@ -6,26 +6,34 @@
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
     <meta name="description" content="JobStreamer : JobStreamer site.">
 
+    <link rel="stylesheet" type="text/css" media="screen" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/1.8.0/semantic.min.css">
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
     <title>JobStreamer</title>
   </head>
 
   <body>
-
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/job-streamer">View on GitHub</a>
-
-          <h1 id="project_title">JobStreamer</h1>
-          <h2 id="project_tagline">JobStreamer site.</h2>
-
-        </header>
+    <div class="ui fixed inverted teal menu">
+      <div class="title item"><b>Job Streamer</b></div>
+      <div class="right menu">
+        <div class="item">
+          <a id="forkme_banner" href="https://github.com/job-streamer"><i class="github square icon"></i>View on GitHub</a>
+        </div>
+      </div>
     </div>
-
+      
     <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
+    <div id="main_content_wrap" class="main grid content full height">
+      <section class="masthead segment">
+        <div class="ui page grid">
+          <div class="column">
+            <div class="introduction">
+              <h1 class="ui purple header">JobStreamer</h1>
+              <img class="ui centered image" src="images/overview.png"/>
+            </div>
+          </div>
+        </div>
+      </section>
       <section id="main_content" class="inner">
         <h3>
 <a id="concepts" class="anchor" href="#concepts" aria-hidden="true"><span class="octicon octicon-link"></span></a>Concepts</h3>
@@ -57,8 +65,5 @@ JobStreamer agent that executes jobs has an exclusive feature. It's No deploy an
         <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
       </footer>
     </div>
-
-    
-
   </body>
 </html>
