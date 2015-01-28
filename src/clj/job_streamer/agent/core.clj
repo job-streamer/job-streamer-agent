@@ -101,11 +101,12 @@
 
 (defn- agent-spec []
   (let [mx (java.lang.management.ManagementFactory/getOperatingSystemMXBean)]
-    {:os-name (.getName mx)
-     :os-version (.getVersion mx)
-     :cpu-arch (.getArch mx)
-     :cpu-core (.getAvailableProcessors mx)}
-    (try
+    (merge
+     {:os-name (.getName mx)
+      :os-version (.getVersion mx)
+      :cpu-arch (.getArch mx)
+      :cpu-core (.getAvailableProcessors mx)}
+     (try
       (when (instance? (Class/forName "com.sun.management.OperatingSystemMXBean") mx)
         {:memory
          {:physical {:free  (.getFreePhysicalMemorySize mx)
@@ -117,7 +118,7 @@
                     :time (.getProcessCpuTime mx)}
           :system  {:load (.getSystemCpuLoad mx)
                     :load-average (.getSystemLoadAverage mx)}}})
-      (catch ClassNotFoundException e))))
+      (catch ClassNotFoundException e)))))
 
 (defmulti handle-command (fn [msg client] (:command msg)))
 

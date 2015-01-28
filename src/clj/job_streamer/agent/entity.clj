@@ -1,4 +1,5 @@
 (ns job-streamer.agent.entity
+  (:use [clojure.walk :only [keywordize-keys stringify-keys]])
   (:require [clojure.data.xml :refer [element emit-str] :as xml])
   (:import [javax.xml.stream XMLStreamWriter XMLOutputFactory]))
 
@@ -28,14 +29,16 @@
     (element :step (->> (select-keys this [:id :start-limit :allow-start-if-complete :next])
                         (filter #(second %))
                         (into {}))
-             (when-let [chunk    (:chunk this)]    (to-xml chunk))
-             (when-let [batchlet (:batchlet this)] (to-xml batchlet))
+             (when-let [chunk (some-> (:chunk this) (map->Chunk))]
+               (to-xml chunk))
+             (when-let [batchlet (some-> (:batchlet this) (map->Batchlet))]
+               (to-xml batchlet))
              (element :listeners {}
                       (element :listener {:ref "net.unit8.job_streamer.agent.listener.StepProgressListener"})))))
 
 (defn make-step [step]
   (-> (map->Step step)
-      (assoc :batchlet (map->Batchlet {:ref (get-in step [:batchlet :ref])}))))
+      (assoc :step/batchlet (map->Batchlet {:ref (get-in step [:batchlet :ref])}))))
 
 (defrecord Job [id restartable steps properties]
   XMLSerializable
@@ -46,7 +49,9 @@
                       (element :listener {:ref "net.unit8.job_streamer.agent.listener.JobProgressListener"}))
              (map to-xml steps))))
 
-(defn make-job
-  [{:keys [id restartable steps properties] :or {restartable true steps [] properties {}}}]
-  (->Job id restartable (map make-step steps) properties))
+(defn make-job [job]
+  (let [job (keywordize-keys (stringify-keys job))
+        {:keys [id restartable steps properties]
+         :or {restartable true, steps [], properties {}}} job]
+    (->Job id restartable (map make-step steps) properties)))
 
