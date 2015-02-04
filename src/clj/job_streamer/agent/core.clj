@@ -84,12 +84,15 @@
   :post! (fn [ctx]
            (let [job-file (File/createTempFile "job" ".xml")
                  job (-> (make-job (get-in ctx [::data :job]))
-                         (assoc-in [:properties :request-id] (get-in ctx [::data :request-id])))]
+                         (assoc-in [:properties :request-id] (get-in ctx [::data :request-id])))
+                 parameters (Properties.)]
              (spit job-file (xml/emit-str (to-xml job)))
+             (doseq [[k v] (get-in ctx [::data :parameters])]
+               (.setProperty (str k) (str v)))
              (let [execution-id (with-classloader @ws-classloader
                                   (.start job-operator
                                           (.getAbsolutePath job-file)
-                                          (Properties.))) 
+                                          parameters)) 
                    execution (with-classloader @ws-classloader
                                (.getJobExecution job-operator execution-id))]
                {:execution-id execution-id})))
