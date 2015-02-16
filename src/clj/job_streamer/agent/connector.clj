@@ -21,17 +21,15 @@
         dos  (DataOutputStream. baos)
         ch   (DatagramChannel/open)]
     (try
-      (loop [i 1]
-        (when-let [interface (NetworkInterface/getByIndex i)]
-          (->> (.getInterfaceAddresses interface) 
-               (map #(.getAddress %))
-               (filter #(and (instance? java.net.Inet4Address %)
-                             (not (.isLoopbackAddress %))))
-               (map #(doto dos
-                       (.write (.getAddress %) 0 4)
-                       (.writeInt port)))
-               doall)
-          (recur (inc i))))
+      (doseq [interface (enumeration-seq (NetworkInterface/getNetworkInterfaces))]
+        (->> (.getInterfaceAddresses interface) 
+             (map #(.getAddress %))
+             (filter #(and (instance? java.net.Inet4Address %)
+                           (not (.isLoopbackAddress %))))
+             (map #(doto dos
+                     (.write (.getAddress %) 0 4)
+                     (.writeInt port)))
+             doall))
       (.. ch socket (setBroadcast true))
       (.send ch
         (ByteBuffer/wrap (.toByteArray baos))
