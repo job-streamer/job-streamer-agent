@@ -27,5 +27,5 @@
 
   :source-paths ["src/clj"]
   :java-source-paths ["src/java"]
-  :plugins [[lein-ring "0.8.13"]]
-  :main job-streamer.agent.core)
+  :main job-streamer.agent.core
+  :profiles {:docker {:local-repo "lib"}})

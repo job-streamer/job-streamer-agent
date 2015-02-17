@@ -1,4 +1,5 @@
 target
+lib
 resources/public/js/blocks.js
 resources/public/js/jobs.js
 .lein-*

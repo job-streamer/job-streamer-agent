@@ -184,7 +184,12 @@
                   :exit-status (.getExitStatus step-execution)
                   :step-name   (.getStepName step-execution)}))
 
-(defn agent-endpoint [connecting?]
+(defresource spec-resource
+  :available-media-types ["application/edn"]
+  :handle-ok (fn [ctx]
+               (agent-spec)))
+
+(defn agent-endpoint [host connecting?]
   (proxy [Endpoint] []
     (onOpen [session config]
       (connector/stop)
@@ -199,7 +204,8 @@
                      (merge {:command :ready
                              :instance-id instance-id
                              :name (.getHostName (InetAddress/getLocalHost))
-                             :port @agent-port}
+                             :port @agent-port
+                             :host host}
                             (agent-spec)))
                     (reify javax.websocket.SendHandler
                       (onResult [_ result]
@@ -210,9 +216,9 @@
       (reset! connecting? false)
       (connector/restart))))
 
-(defn connect-to-bus [url-str connecting?]
+(defn connect-to-bus [url-str my-host connecting?]
   (let [uri (URI/create url-str)
-        endpoint (agent-endpoint connecting?)
+        endpoint (agent-endpoint my-host connecting?)
         session (.connectToServer
                  websocket-container
                  ^Endpoint endpoint nil uri)]
@@ -252,16 +258,16 @@
 (defn join-bus-routine []
   (let [connecting? (atom false)]
     (go-loop []
-      (let [url (<! join-request-channel)]
+      (let [{url :control-bus-url my-host :agent-host} (<! join-request-channel)]
         (log/info "Join request proccessing... connecting? " @connecting?)
         (when-not @connecting?
           (reset! connecting? true)
-          (connect-to-bus url connecting?))
+          (connect-to-bus url my-host connecting?))
         (recur)))))
 
 (defroutes app-routes
-  (POST "/join-bus" {{url :control-bus-url} :params}
-    (put! join-request-channel url)
+  (POST "/join-bus" {params :params}
+    (put! join-request-channel params)
     "Accept")
 
   (ANY "/jobs" [] jobs-resource)
@@ -273,7 +279,8 @@
       [execution-id step-execution-id]
     (step-execution-resource (Long/parseLong execution-id) (Long/parseLong step-execution-id)))
   (ANY ["/job-execution/:execution-id" :execution-id #"\d+"] [execution-id]
-    (job-execution-resource (Long/parseLong execution-id))))
+    (job-execution-resource (Long/parseLong execution-id)))
+  (ANY "/spec" [] spec-resource))
 
 (def app
   (-> app-routes
