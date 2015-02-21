@@ -5,13 +5,13 @@
             [compojure.core :refer [defroutes ANY POST]]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
             [liberator.dev :refer [wrap-trace]]
-            [job-streamer.agent.connector :as connector])
+            (job-streamer.agent [connector :as connector]
+                                [runtime :as runtime]))
   (:use [clojure.core.async :only [go-loop <! put! timeout chan]]
         [org.httpkit.server :only [run-server]]
         [environ.core :only [env]]
         [ring.middleware.reload :only [wrap-reload]]
         [job-streamer.agent.spec :only [agent-spec]]
-        [job-streamer.agent.runtime :only [set-ws-classloader!]]
         [job-streamer.agent.resources :only [jobs-resource job-instances-resource
                                              job-executions-resource job-execution-resource
                                              step-execution-resource spec-resource]])
@@ -21,7 +21,6 @@
            [java.nio ByteBuffer]
            [java.nio.channels DatagramChannel]
            [org.slf4j LoggerFactory]
-           [net.unit8.wscl WebSocketClassLoader]
            [net.unit8.logback WebSocketAppender]
            [net.unit8.job_streamer.agent StringMessageHandler]
            [javax.websocket ContainerProvider Endpoint MessageHandler$Whole]))
@@ -31,9 +30,6 @@
 (defonce instance-id (UUID/randomUUID))
 (def ws-channel (chan))
 (def join-request-channel (chan))
-
-
-(defn tracer-bullet-fn [])
 
 (defn join-request []
   (let [baos (ByteArrayOutputStream.)
@@ -94,9 +90,7 @@
                  websocket-container
                  ^Endpoint endpoint nil uri)]
     (try
-      (set-ws-classloader! (WebSocketClassLoader.
-                            (str "ws://" (.getHost uri) ":" (.getPort uri) "/wscl")
-                            (.getClassLoader (class tracer-bullet-fn))))
+      (runtime/set-base-url! (str "ws://" (.getHost uri) ":" (.getPort uri) "/wscl"))
       (catch Exception e
         (log/error e)
         (reset! connecting? false)))
@@ -132,7 +126,10 @@
         (log/info "Join request proccessing... connecting? " @connecting?)
         (when-not @connecting?
           (reset! connecting? true)
-          (connect-to-bus url my-host connecting?))
+          (try
+            (connect-to-bus url my-host connecting?)
+            (catch Exception e
+              (log/error "Can't connect to bus."))))
         (recur)))))
 
 (defroutes app-routes
