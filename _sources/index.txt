@@ -9,7 +9,7 @@ JobStreamer
 ==============
 
 .. rst-class:: overview image
-.. image:: _static/images/overview.png
+.. image:: assets/images/overview.png
 
 ------------
 Concept
