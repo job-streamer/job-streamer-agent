@@ -123,13 +123,13 @@
   (let [connecting? (atom false)]
     (go-loop []
       (let [{url :control-bus-url my-host :agent-host} (<! join-request-channel)]
-        (log/info "Join request proccessing... connecting? " @connecting?)
+        (log/debug "Join request proccessing... connecting? " @connecting?)
         (when-not @connecting?
           (reset! connecting? true)
           (try
             (connect-to-bus url my-host connecting?)
             (catch Exception e
-              (log/error "Can't connect to bus."))))
+              (log/error e "Can't connect to bus."))))
         (recur)))))
 
 (defroutes app-routes

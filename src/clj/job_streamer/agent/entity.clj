@@ -32,9 +32,12 @@
                  chunk batchlet properties]
   XMLSerializable
   (to-xml [this]
-    (element :step (->> (select-keys this [:id :start-limit :allow-start-if-complete :next])
-                        (filter #(second %))
-                        (into {}))
+    (element :step (merge
+                    {:id (:name this)
+                     :allow-start-if-complete (:allow-start-if-complete? this)}
+                    (->> (select-keys this [:start-limit :next])
+                         (filter #(second %))
+                         (into {}))) 
              (when-let [properties (some-> (:properties this))]
                (properties->xml properties))
              (when-let [chunk (some-> (:chunk this) (map->Chunk))]
@@ -62,7 +65,7 @@
 
 (defn make-job [job]
   (let [job (keywordize-keys (stringify-keys job))
-        {:keys [id restartable steps properties]
-         :or {restartable true, steps [], properties {}}} job]
-    (->Job id restartable (map make-step steps) properties)))
+        {:keys [name restartable? steps properties]
+         :or {restartable? true, steps [], properties {}}} job]
+    (->Job name restartable? (map make-step steps) properties)))
 

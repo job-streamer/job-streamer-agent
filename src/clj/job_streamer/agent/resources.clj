@@ -7,9 +7,9 @@
         [job-streamer.agent.entity :only [make-job to-xml]]
         [job-streamer.agent.spec :only [agent-spec]]
         [job-streamer.agent.runtime :only [job-operator with-classloader find-loader]])
-  (:import [java.io File]
-           [java.util Properties]
-           [java.nio.file Files]))
+  (:import [java.util Properties]
+           [java.nio.file Files]
+           [java.nio.file.attribute FileAttribute]))
 
 (defn- body-as-string [ctx]
   (if-let [body (get-in ctx [:request :body])]
@@ -34,21 +34,27 @@
   :allowed-methods [:get :post]
   :malformed? #(parse-edn % ::data)
   :post! (fn [ctx]
-           (let [job-file (File/createTempFile "job" ".xml")
+           (let [job-file (Files/createTempFile "job" ".xml"
+                                                (into-array FileAttribute []))
                  job (-> (make-job (get-in ctx [::data :job]))
                          (assoc-in [:properties :request-id] (get-in ctx [::data :request-id])))
                  parameters (Properties.)
                  loader (find-loader (get-in ctx [::data :class-loader-id]))]
-             (spit job-file (xml/emit-str (to-xml job)))
-             (doseq [[k v] (get-in ctx [::data :parameters])]
-               (.setProperty (str k) (str v)))
-             (let [execution-id (with-classloader loader
-                                  (.start job-operator
-                                          (.getAbsolutePath job-file)
-                                          parameters)) 
-                   execution (with-classloader loader
-                               (.getJobExecution job-operator execution-id))]
-               {:execution-id execution-id})))
+             (try
+               (spit (.toFile job-file) (xml/emit-str (to-xml job)))
+               (doseq [[k v] (get-in ctx [::data :parameters])]
+                 (.setProperty (str k) (str v)))
+               (let [execution-id (with-classloader loader
+                                    (.start job-operator
+                                            (.. job-file toAbsolutePath toString)
+                                            parameters)) 
+                     execution (with-classloader loader
+                                 (.getJobExecution job-operator execution-id))]
+                 {:execution-id execution-id})
+               (finally (Files/deleteIfExists job-file)))
+             
+             
+             ))
   :post-redirect? false
   :handle-created (fn [ctx]
                     (select-keys ctx [:execution-id]))
