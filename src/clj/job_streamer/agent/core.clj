@@ -69,10 +69,10 @@
           getAsyncRemote
           (sendText (pr-str
                      (merge {:command :ready
-                             :instance-id instance-id
-                             :name (.getHostName (InetAddress/getLocalHost))
-                             :port @agent-port
-                             :host host}
+                             :agent/instance-id instance-id
+                             :agent/name (.getHostName (InetAddress/getLocalHost))
+                             :agent/port @agent-port
+                             :agent/host host}
                             (agent-spec)))
                     (reify javax.websocket.SendHandler
                       (onResult [_ result]
