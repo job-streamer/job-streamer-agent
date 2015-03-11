@@ -34,7 +34,7 @@
   (to-xml [this]
     (element :step (merge
                     {:id (:name this)
-                     :allow-start-if-complete (:allow-start-if-complete? this)}
+                     :allow-start-if-complete (boolean (:allow-start-if-complete? this))}
                     (->> (select-keys this [:start-limit :next])
                          (filter #(second %))
                          (into {}))) 

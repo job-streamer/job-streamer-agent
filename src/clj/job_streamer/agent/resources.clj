@@ -51,10 +51,7 @@
                      execution (with-classloader loader
                                  (.getJobExecution job-operator execution-id))]
                  {:execution-id execution-id})
-               (finally (Files/deleteIfExists job-file)))
-             
-             
-             ))
+               (finally #_(Files/deleteIfExists job-file)))))
   :post-redirect? false
   :handle-created (fn [ctx]
                     (select-keys ctx [:execution-id]))
