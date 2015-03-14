@@ -2,12 +2,14 @@ package net.unit8.job_streamer.agent.listener;
 
 import clojure.java.api.Clojure;
 import clojure.lang.*;
+import net.unit8.job_streamer.agent.jpa.ApplicationPersistenceProviderResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.batch.api.listener.AbstractJobListener;
 import javax.batch.runtime.context.JobContext;
 import javax.inject.Inject;
+import javax.persistence.spi.PersistenceProviderResolverHolder;
 import java.util.HashMap;
 
 /**
@@ -18,6 +20,11 @@ public class JobProgressListener extends AbstractJobListener {
 
     @Inject
     private JobContext jobContext;
+
+    @Override
+    public void beforeJob() {
+        PersistenceProviderResolverHolder.setPersistenceProviderResolver(new ApplicationPersistenceProviderResolver());
+    }
 
     @Override
     public void afterJob() {
