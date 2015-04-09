@@ -43,11 +43,12 @@
              (try
                (spit (.toFile job-file) (xml/emit-str (to-xml job)))
                (doseq [[k v] (get-in ctx [::data :parameters])]
-                 (.setProperty (str k) (str v)))
+                 (.setProperty parameters (name k) (str v)))
+               (println parameters)
                (let [execution-id (with-classloader loader
                                     (.start job-operator
                                             (.. job-file toAbsolutePath toString)
-                                            parameters)) 
+                                            parameters))
                      execution (with-classloader loader
                                  (.getJobExecution job-operator execution-id))]
                  {:execution-id execution-id})
