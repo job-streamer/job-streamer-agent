@@ -13,16 +13,22 @@
 package net.unit8.job_streamer.agent;
 
 import net.unit8.wscl.WebSocketClassLoader;
-import org.jberet.se.SEArtifactFactory;
+import org.jberet.repository.JdbcRepository;
+import org.jberet.repository.JobRepository;
+import org.jberet.se.ClassPathJobXmlResolver;
 import org.jberet.se._private.SEBatchLogger;
 import org.jberet.spi.ArtifactFactory;
 import org.jberet.spi.BatchEnvironment;
+import org.jberet.spi.JobXmlResolver;
+import org.jberet.tools.ChainedJobXmlResolver;
+import org.jberet.tools.MetaInfBatchJobsJobXmlResolver;
 import org.jberet.tx.LocalTransactionManager;
 
 import javax.transaction.TransactionManager;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+import java.util.ServiceLoader;
 import java.util.concurrent.*;
 
 /**
@@ -34,14 +40,15 @@ public final class JobStreamerBatchEnvironment implements BatchEnvironment {
     WebSocketClassLoader webSocketClassLoader;
 
     public static final String CONFIG_FILE_NAME = "jberet.properties";
-    public static final String JOB_REPOSITORY_TYPE_KEY = "job-repository-type";
-    public static final String REPOSITORY_TYPE_IN_MEMORY = "in-memory";
-    public static final String REPOSITORY_TYPE_JDBC = "jdbc";
-    public static final String REPOSITORY_TYPE_MONGODB = "mongodb";
-    public static final String REPOSITORY_TYPE_INFINISPAN = "infinispan";
+
+    private static final JobXmlResolver[] DEFAULT_JOB_XML_RESOLVERS = {
+            new ClassPathJobXmlResolver(),
+            new MetaInfBatchJobsJobXmlResolver(),
+    };
 
     private final Properties configProperties;
     private final TransactionManager tm;
+    private final JobXmlResolver jobXmlResolver;
 
     static final String THREAD_POOL_TYPE = "thread-pool-type";
     static final String THREAD_POOL_TYPE_CACHED = "Cached";
@@ -72,6 +79,7 @@ public final class JobStreamerBatchEnvironment implements BatchEnvironment {
         this.tm = LocalTransactionManager.getInstance();
 
         createThreadPoolExecutor();
+        this.jobXmlResolver = new FileSystemJobXmlResolver();
     }
 
     @Override
@@ -88,27 +96,25 @@ public final class JobStreamerBatchEnvironment implements BatchEnvironment {
 
     @Override
     public ArtifactFactory getArtifactFactory() {
-        return new SEArtifactFactory();
+        return new JobStreamerArtifactFactory(getClassLoader());
     }
 
     @Override
-    public Future<?> submitTask(final Runnable task) {
-        return executorService.submit(task);
-    }
-
-    @Override
-    public <T> Future<T> submitTask(final Runnable task, final T result) {
-        return executorService.submit(task, result);
-    }
-
-    @Override
-    public <T> Future<T> submitTask(final Callable<T> task) {
-        return executorService.submit(task);
+    public void submitTask(final Runnable task) {
+        executorService.submit(task);
     }
 
     @Override
     public TransactionManager getTransactionManager() {
         return tm;
+    }
+
+    public JobRepository getJobRepository() {
+        return JdbcRepository.create(configProperties);
+    }
+
+    public JobXmlResolver getJobXmlResolver() {
+        return jobXmlResolver;
     }
 
     @Override

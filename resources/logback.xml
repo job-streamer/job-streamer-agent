@@ -14,4 +14,6 @@
   <root level="info">
     <appender-ref ref="STDOUT"/>
   </root>
+  <appender>
+  </appender>
 </configuration>
