@@ -6,14 +6,12 @@
     </encoder>
   </appender>
 
-  <logger name="job_streamer" level="debug"/>
   <logger name="net.unit8" level="debug"/>
   <logger name="job_streamer.agent" level="debug"/>
   <logger name="job-streamer.agent" level="debug"/>
+  <!--<logger name="org.jboss.weld" level="debug"/>-->
 
   <root level="info">
     <appender-ref ref="STDOUT"/>
   </root>
-  <appender>
-  </appender>
 </configuration>

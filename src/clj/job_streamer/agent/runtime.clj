@@ -1,7 +1,8 @@
 (ns job-streamer.agent.runtime
   (:require [clojure.tools.logging :as log])
   (:import [javax.batch.runtime BatchRuntime]
-           [net.unit8.wscl WebSocketClassLoader]))
+           [net.unit8.wscl WebSocketClassLoader])
+  (:gen-class))
 
 (defn tracer-bullet-fn [])
 

@@ -23,11 +23,14 @@
       (if-let [body (body-as-string context)]
         (let [data (edn/read-string body)]
           [false {key data}])
-        {:message "No doby"})
+        {:message "No body"})
       (catch Exception e
         (.printStackTrace e)
         {:message (format "IOException: %s" (.getMessage e))}))))
 
+(defn- keywordize-status [execution]
+  (keyword "batch-status"
+           (.. execution getBatchStatus name toLowerCase)))
 
 (defresource jobs-resource
   :available-media-types ["application/edn"]
@@ -44,19 +47,21 @@
                (spit (.toFile job-file) (xml/emit-str (to-xml job)))
                (doseq [[k v] (get-in ctx [::data :parameters])]
                  (.setProperty parameters (name k) (str v)))
-               (println parameters)
                (let [execution-id (with-classloader loader
                                     (.start job-operator
                                             (.. job-file toAbsolutePath toString)
                                             parameters))
                      execution (with-classloader loader
                                  (.getJobExecution job-operator execution-id))]
-                 {:execution-id execution-id})
-               (finally #_(Files/deleteIfExists job-file)))))
+                 {:execution-id execution-id
+                  :batch-status (keywordize-status execution)
+                  :start-time   (.getStartTime execution)})
+               (finally (Files/deleteIfExists job-file)))))
   :post-redirect? false
   :handle-created (fn [ctx]
-                    (select-keys ctx [:execution-id]))
+                    (select-keys ctx [:execution-id :batch-status :start-time]))
   :handle-ok (fn [ctx]
+               ;; TODO JBERET doesn't return empty set...
                (vec (. job-operator getJobNames))))
 
 (defresource job-instances-resource [job-id])
@@ -69,26 +74,36 @@
                                              first)]
                  (map bean (. job-operator getJobExecutions job-instance)))))
 
-(defresource job-execution-resource [execution-id]
+(defresource job-execution-resource [execution-id & [cmd]]
   :available-media-types ["application/edn"]
+  :allowed-methods [:get :put]
+  :malformed? #(parse-edn % ::data)
   :exists? (fn [_]
              (when-let [execution (.getJobExecution job-operator execution-id)]
                {:execution execution
                 :step-executions (.getStepExecutions job-operator (.getExecutionId execution))}))
+  :put! (fn [ctx]
+          (case cmd
+            :abandon (do (log/info "Abandon " execution-id)
+                         (.abandon job-operator execution-id)) 
+            :stop    (do (log/info "Stop " execution-id)
+                         (.stop job-operator execution-id)) 
+            :restart (let [parameters (Properties.)]
+                       (doseq [[k v] (get-in ctx [::data :parameters])]
+                         (.setProperty parameters (name k) (str v)))
+                       (.restart job-operator execution-id parameters))))
   :handle-ok (fn [{execution :execution step-executions :step-executions}]
                {:execution-id (.getExecutionId execution)
                 :start-time (.getStartTime execution)
                 :end-time   (.getEndTime execution)
-                :batch-status (keyword "batch-status"
-                                       (.. execution getBatchStatus name toLowerCase))
+                :batch-status (keywordize-status execution)
                 :exit-status (.getExitStatus execution)
                 :step-executions (->> step-executions
                                       (map (fn [se]
                                            {:start-time (.getStartTime se)
                                             :end-time (.getEndTime se)
                                             :step-execution-id (.getStepExecutionId se)
-                                            :batch-status (keyword "batch-status"
-                                                                   (.. se getBatchStatus name toLowerCase))}))
+                                            :batch-status (keywordize-status se)}))
                                       (vec))}))
 
 (defresource step-execution-resource [execution-id step-execution-id]
@@ -103,8 +118,7 @@
                {:step-execution-id (.getStepExecutionId step-execution)
                   :start-time (.getStartTime step-execution)
                   :end-time   (.getEndTime step-execution)
-                  :batch-status (keyword "batch-status"
-                                         (.. step-execution getBatchStatus name toLowerCase))
+                  :batch-status (keywordize-status step-execution)
                   :exit-status (.getExitStatus step-execution)
                   :step-name   (.getStepName step-execution)}))
 

@@ -28,7 +28,6 @@ public class JobProgressListener extends AbstractJobListener {
 
     @Override
     public void afterJob() {
-        HashMap<Keyword, Object> command = new HashMap<Keyword, Object>();
         logger.debug("Send progress message... " + jobContext.getExecutionId());
 
         Var wsChannel = RT.var("job-streamer.agent.core", "ws-channel");

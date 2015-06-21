@@ -23,13 +23,17 @@
            [org.slf4j LoggerFactory]
            [net.unit8.logback WebSocketAppender]
            [net.unit8.job_streamer.agent StringMessageHandler]
-           [javax.websocket ContainerProvider Endpoint MessageHandler$Whole]))
+           [javax.websocket ContainerProvider Endpoint MessageHandler$Whole])
+  (:gen-class))
 
 (defonce agent-port (atom nil))
 (defonce websocket-container (ContainerProvider/getWebSocketContainer))
-(defonce instance-id (UUID/randomUUID))
-(def ws-channel (chan))
-(def join-request-channel (chan))
+(defonce instance-id (or (some-> (env :instance-name)
+                                 (.getBytes)
+                                 (UUID/nameUUIDFromBytes))
+                         (UUID/randomUUID)))
+(defonce ws-channel (chan))
+(defonce join-request-channel (chan))
 
 (defn join-request []
   (let [baos (ByteArrayOutputStream.)
@@ -101,7 +105,7 @@
         (.setContext (LoggerFactory/getILoggerFactory))
         (.setServerUri (str "ws://" (.getHost uri) ":" (.getPort uri) "/wslog"))
         (.start))
-      (.. (LoggerFactory/getLogger "job-streamer") (addAppender ws-appender)))
+      (.. (LoggerFactory/getLogger "root") (addAppender ws-appender)))
     
 
     (go-loop []
@@ -145,6 +149,9 @@
   (ANY ["/job-execution/:execution-id/step-execution/:step-execution-id" :execution-id #"\d+" :step-execution-id #"\d+"]
       [execution-id step-execution-id]
     (step-execution-resource (Long/parseLong execution-id) (Long/parseLong step-execution-id)))
+  (ANY ["/job-execution/:execution-id/:cmd" :execution-id #"\d+" :cmd #"[\w\-]+"]
+      [execution-id cmd]
+    (job-execution-resource (Long/parseLong execution-id) (keyword cmd)))
   (ANY ["/job-execution/:execution-id" :execution-id #"\d+"] [execution-id]
     (job-execution-resource (Long/parseLong execution-id)))
   (ANY "/spec" [] spec-resource))
