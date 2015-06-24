@@ -7,7 +7,7 @@
                  
                  [org.jboss.weld/weld-core "2.2.13.Final"]
                  [org.jboss.weld.se/weld-se "2.2.13.Final"]
-                 [net.unit8.weld/weld-prescan "0.1.0-SNAPSHOT"]
+                 [net.unit8.weld/weld-prescan "0.1.0"]
                  
                  [org.wildfly.security/wildfly-security-manager "1.1.2.Final"]
                  [com.google.guava/guava "18.0"]
