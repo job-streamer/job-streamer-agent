@@ -3,6 +3,8 @@ lib/*
 resources/public/js/blocks.js
 resources/public/js/jobs.js
 .lein-*
+.nrepl-*
 pom.xml
 .idea
 *.iml
+/csvwork

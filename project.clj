@@ -1,5 +1,5 @@
-(defproject net.unit8.job-streamer/job-streamer-agent "0.2.0-SNAPSHOT"
-  :dependencies [[javax/javaee-api "7.0" :scope "provided"]
+(defproject net.unit8.job-streamer/job-streamer-agent (slurp "VERSION")
+  :dependencies [[javax/javaee-api "7.0"]
                  [org.jberet/jberet-core "1.1.0.Final"]
                  [org.jberet/jberet-se "1.1.0.Final"]
                  [org.jboss.marshalling/jboss-marshalling "1.4.7.Final"]
@@ -13,7 +13,7 @@
                  [com.google.guava/guava "18.0"]
                  [com.h2database/h2 "1.4.187"]
 
-                 [org.clojure/clojure "1.7.0-RC1"]
+                 [org.clojure/clojure "1.7.0-RC2"]
                  [org.clojure/tools.logging "0.3.1"]
                  [org.clojure/data.xml "0.0.8"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
@@ -27,10 +27,12 @@
                  [ring/ring-defaults "0.1.5"]
                  [ring/ring-devel "1.3.2"]
                  [ch.qos.logback/logback-classic "1.1.3"]]
-  :plugins [[lein-libdir "0.1.1"]]
-  :libdir-path "lib"
   :source-paths ["src/clj"]
   :java-source-paths ["src/java"]
+  
   :main job-streamer.agent.core
   :aot :all  
+  :pom-plugins [[org.apache.maven.plugins/maven-assembly-plugin "2.5.5"
+                 {:configuration [:descriptors [:descriptor "src/assembly/dist.xml"]]}]]
+  
   :profiles {:docker {:local-repo "lib"}})
