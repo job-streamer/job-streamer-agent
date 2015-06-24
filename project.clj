@@ -1,4 +1,4 @@
-(defproject net.unit8.job-streamer/job-streamer-agent (slurp "VERSION")
+(defproject net.unit8.job-streamer/job-streamer-agent (clojure.string/trim-newline (slurp "VERSION")) 
   :dependencies [[javax/javaee-api "7.0"]
                  [org.jberet/jberet-core "1.1.0.Final"]
                  [org.jberet/jberet-se "1.1.0.Final"]

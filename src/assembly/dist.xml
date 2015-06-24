@@ -11,6 +11,10 @@
       <outputDirectory>bin</outputDirectory>
     </file>
     <file>
+      <source>bin/agent.bat</source>
+      <outputDirectory>bin</outputDirectory>
+    </file>
+    <file>
       <source>VERSION</source>
     </file>
     <file>
