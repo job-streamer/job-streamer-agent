@@ -88,10 +88,17 @@
                          (.abandon job-operator execution-id)) 
             :stop    (do (log/info "Stop " execution-id)
                          (.stop job-operator execution-id)) 
-            :restart (let [parameters (Properties.)]
+            :restart (let [parameters (Properties.)
+                           loader (find-loader (get-in ctx [::data :class-loader-id]))]
                        (doseq [[k v] (get-in ctx [::data :parameters])]
                          (.setProperty parameters (name k) (str v)))
-                       (.restart job-operator execution-id parameters))))
+                       (let [execution-id (with-classloader loader
+                                            (.restart job-operator execution-id parameters))
+                             execution (with-classloader loader
+                                         (.getJobExecution job-operator execution-id))]
+                         {:execution-id execution-id
+                          :batch-status (keywordize-status execution)
+                          :start-time   (.getStartTime execution)}))))
   :handle-ok (fn [{execution :execution step-executions :step-executions}]
                {:execution-id (.getExecutionId execution)
                 :start-time (.getStartTime execution)

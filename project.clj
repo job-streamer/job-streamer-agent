@@ -13,7 +13,7 @@
                  [com.google.guava/guava "18.0"]
                  [com.h2database/h2 "1.4.187"]
 
-                 [org.clojure/clojure "1.7.0-RC2"]
+                 [org.clojure/clojure "1.7.0"]
                  [org.clojure/tools.logging "0.3.1"]
                  [org.clojure/data.xml "0.0.8"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
@@ -29,10 +29,12 @@
                  [ch.qos.logback/logback-classic "1.1.3"]]
   :source-paths ["src/clj"]
   :java-source-paths ["src/java"]
+  :javac-options ["-target" "1.7" "-source" "1.7" "-Xlint:-options"]
   
   :main job-streamer.agent.core
   :aot :all  
   :pom-plugins [[org.apache.maven.plugins/maven-assembly-plugin "2.5.5"
                  {:configuration [:descriptors [:descriptor "src/assembly/dist.xml"]]}]]
   
-  :profiles {:docker {:local-repo "lib"}})
+  :profiles {:docker {:local-repo "lib"}
+             :dev {:jvm-opts ["-Dwscl.cache.directory=${user.home}/.wscl-cache"]}})
