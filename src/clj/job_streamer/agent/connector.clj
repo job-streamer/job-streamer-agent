@@ -16,6 +16,18 @@
     (.write (.getAddress address) 0 4)
     (.writeInt port)))
 
+(defn send-multicast [channel msg ip-address port]
+  (.. channel socket (setBroadcast false))
+  (let [address (InetSocketAddress. ip-address port)]
+    (.connect channel address)
+    (.send channel msg address)))
+
+(defn send-broadcast [channel msg ip-address port]
+  (.. channel socket (setBroadcast true))
+  (let [address (InetSocketAddress. ip-address port)]
+    (.connect channel address)
+    (.send channel msg address)))
+
 (defn notify [port]
   (let [baos (ByteArrayOutputStream.)
         dos  (DataOutputStream. baos)
@@ -30,11 +42,14 @@
                      (.write (.getAddress %) 0 4)
                      (.writeInt port)))
              doall))
-      (.. ch socket (setBroadcast true))
-      (.send ch
-        (ByteBuffer/wrap (.toByteArray baos))
-        (InetSocketAddress. "255.255.255.255" (or (env :control-bus-port) 45100)))
-      (log/info "Notify broadcast.")
+      (doto ch
+        (.configureBlocking true))
+      (let [port (Integer/parseInt (or (:discovery-port env) "45100"))
+            msg (ByteBuffer/wrap (.toByteArray baos))]
+        (if-let [multicast-address (env :discovery-address)]
+          (send-multicast ch msg multicast-address port)
+          (send-broadcast ch msg "255.255.255.255" port))
+        (log/info "Notify broadcast."))
       (finally (.close ch)))))
 
 (defn start [port]

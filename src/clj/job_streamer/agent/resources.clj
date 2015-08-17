@@ -85,9 +85,9 @@
   :put! (fn [ctx]
           (case cmd
             :abandon (do (log/info "Abandon " execution-id)
-                         (.abandon job-operator execution-id)) 
+                         (.abandon job-operator execution-id))
             :stop    (do (log/info "Stop " execution-id)
-                         (.stop job-operator execution-id)) 
+                         (.stop job-operator execution-id))
             :restart (let [parameters (Properties.)
                            loader (find-loader (get-in ctx [::data :class-loader-id]))]
                        (doseq [[k v] (get-in ctx [::data :parameters])]
@@ -99,6 +99,8 @@
                          {:execution-id execution-id
                           :batch-status (keywordize-status execution)
                           :start-time   (.getStartTime execution)}))))
+  :handle-created (fn [ctx]
+                    (select-keys ctx [:execution-id :batch-status :start-time]))
   :handle-ok (fn [{execution :execution step-executions :step-executions}]
                {:execution-id (.getExecutionId execution)
                 :start-time (.getStartTime execution)
@@ -110,6 +112,7 @@
                                            {:start-time (.getStartTime se)
                                             :end-time (.getEndTime se)
                                             :step-execution-id (.getStepExecutionId se)
+                                            :exit-status (.getExitStatus se)
                                             :batch-status (keywordize-status se)}))
                                       (vec))}))
 

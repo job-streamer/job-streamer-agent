@@ -18,10 +18,32 @@
     (element :next {:on (:on this)
                     :to (:to this)})))
 
+(defrecord End [on exit-status]
+  XMLSerializable
+  (to-xml [this]
+    (element :end {:on (:on this)
+                   :exit-status (:exit-status this)})))
+
+(defrecord Fail [on exit-status]
+  XMLSerializable
+  (to-xml [this]
+    (element :fail {:on (:on this)
+                    :exit-status (:exit-status this)})))
+
+(defrecord Stop [on exit-status restart]
+  XMLSerializable
+  (to-xml [this]
+    (element :stop {:on (:on this)
+                    :restart (:restart this)
+                    :exit-status (:exit-status this)})))
+
 (defn transitions->xml [transitions]
   (map (fn [transition]
          (to-xml (cond
-                   (:next/on transition) (->Next (:next/on transition) (:next/to transition)))) )
+                   (:next/on transition) (->Next (:next/on transition) (:next/to transition))
+                   (:end/on  transition) (->End  (:end/on  transition) (:end/exit-status  transition))
+                   (:fail/on transition) (->Fail (:fail/on transition) (:fail/exit-status transition))
+                   (:stop/op transition) (->Stop (:stop/on transition) (:stop/exit-status transition) (:stop/restart transition)))))
        transitions))
 
 (defrecord Split [id next components]

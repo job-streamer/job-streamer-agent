@@ -1,5 +1,8 @@
+#
+# JobStreamer agent
+#
 FROM dockerfile/java:oracle-java8
-MAINTAINER kawasima <Yoshitaka Kawasima>
+MAINTAINER kawasima <kawasima1016@gmail.com>
 
 ENV LEIN_ROOT 1
 RUN curl -L -s https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein > \
@@ -9,7 +12,7 @@ RUN curl -L -s https://raw.githubusercontent.com/technomancy/leiningen/stable/bi
 
 RUN mkdir -p /opt/job-streamer-agent
 WORKDIR /opt/job-streamer-agent/
-ADD project.clj ./
+ADD project.clj VERSION ./
 ADD lib lib
 RUN lein with-profile docker deps
 ADD . /opt/job-streamer-agent

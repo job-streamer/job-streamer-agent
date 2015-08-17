@@ -11,7 +11,7 @@
                  
                  [org.wildfly.security/wildfly-security-manager "1.1.2.Final"]
                  [com.google.guava/guava "18.0"]
-                 [com.h2database/h2 "1.4.187"]
+                 [com.h2database/h2 "1.4.188"]
 
                  [org.clojure/clojure "1.7.0"]
                  [org.clojure/tools.logging "0.3.1"]
@@ -23,9 +23,9 @@
                  [io.undertow/undertow-websockets-jsr "1.1.1.Final"]
                  [liberator "0.13"]
                  [http-kit "2.1.19"]
-                 [compojure "1.3.4"]
+                 [compojure "1.4.0"]
                  [ring/ring-defaults "0.1.5"]
-                 [ring/ring-devel "1.3.2"]
+                 [ring/ring-devel "1.4.0"]
                  [ch.qos.logback/logback-classic "1.1.3"]]
   :source-paths ["src/clj"]
   :java-source-paths ["src/java"]
