@@ -106,7 +106,7 @@
                      :allow-start-if-complete (boolean (:allow-start-if-complete? this))}
                     (->> (select-keys this [:start-limit :next])
                          (filter #(second %))
-                         (into {}))) 
+                         (into {})))
              (when-let [properties (some-> (:properties this))]
                (properties->xml properties))
              (when-let [chunk (some-> (:chunk this) make-chunk)]
@@ -141,12 +141,15 @@
 
 (defn extract-step [components]
   (let [inner-steps (atom {})
-        components (prewalk #(if (and (coll? %) (= (first %) :next/to))
+        components (prewalk #(if (and (coll? %) (coll? (-> % second)) (= (first %) :next/to))
                 (let [steps (-> % second)]
                   (swap! inner-steps concat steps)
                   [:next/to (:step/name (-> % second first))])
                 %) components)]
-    (concat components @inner-steps)))
+    (let [after-components (concat components @inner-steps)]
+      (if (= components after-components)
+        after-components
+        (extract-step after-components)))))
 
 (defn make-job [job]
   (let [{:keys [job/name job/restartable? job/components job/properties]
