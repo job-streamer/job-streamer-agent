@@ -141,7 +141,7 @@
 
 (defn extract-step [components]
   (let [inner-steps (atom {})
-        components (prewalk #(if (and (coll? %) (coll? (-> % second)) (= (first %) :next/to))
+        components (prewalk #(if (and (coll? %) (coll? (second %)) (= (first %) :next/to))
                 (let [steps (-> % second)]
                   (swap! inner-steps concat steps)
                   [:next/to (:step/name (-> % second first))])

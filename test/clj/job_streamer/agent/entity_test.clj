@@ -1,8 +1,7 @@
 (ns job-streamer.agent.entity-test
   (:require [clojure.edn :as edn]
-            [job-streamer.agent.entity :refer [make-job to-xml]])
-  (:use [clojure.test]))
-(run-tests)
+            [clojure.test :refer [deftest testing is]]
+            [job-streamer.agent.entity :refer [make-job to-xml]]))
 
 (def job1
   {:job/name "job1",
