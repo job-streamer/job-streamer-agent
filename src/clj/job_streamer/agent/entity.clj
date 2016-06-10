@@ -1,6 +1,6 @@
 (ns job-streamer.agent.entity
-  (:use [clojure.walk :only [keywordize-keys stringify-keys]])
-  (:require [clojure.data.xml :refer [element emit-str] :as xml])
+  (:require [clojure.data.xml :refer [element emit-str] :as xml]
+            [clojure.walk :refer [keywordize-keys stringify-keys prewalk]])
   (:import [javax.xml.stream XMLStreamWriter XMLOutputFactory]))
 
 (defn properties->xml [properties]
@@ -106,7 +106,7 @@
                      :allow-start-if-complete (boolean (:allow-start-if-complete? this))}
                     (->> (select-keys this [:start-limit :next])
                          (filter #(second %))
-                         (into {}))) 
+                         (into {})))
              (when-let [properties (some-> (:properties this))]
                (properties->xml properties))
              (when-let [chunk (some-> (:chunk this) make-chunk)]
@@ -124,8 +124,8 @@
 
 (defn make-component [component]
   (cond
-    (:step/name component) (make-step component)
-    (:flow/name component) (make-flow component)
+    (:step/name component)  (make-step component)
+    (:flow/name component)  (make-flow component)
     (:split/name component) (make-split component)
     ; (:decision/name component) (make-decision component) TODO will support
     ))
@@ -139,8 +139,20 @@
                       (element :listener {:ref "net.unit8.job_streamer.agent.listener.JobProgressListener"}))
              (map to-xml components))))
 
+(defn extract-step [components]
+  (let [inner-steps (atom {})
+        components (prewalk #(if (and (coll? %) (coll? (second %)) (= (first %) :next/to))
+                (let [steps (-> % second)]
+                  (swap! inner-steps concat steps)
+                  [:next/to (:step/name (-> % second first))])
+                %) components)]
+    (let [after-components (concat components @inner-steps)]
+      (if (= components after-components)
+        after-components
+        (extract-step after-components)))))
+
 (defn make-job [job]
   (let [{:keys [job/name job/restartable? job/components job/properties]
          :or {job/restartable? true, job/components [], job/properties {}}} job]
-    (->Job name restartable? (map make-component components) properties)))
+    (->Job name restartable? (map make-component (extract-step components)) properties)))
 

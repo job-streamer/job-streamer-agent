@@ -28,6 +28,7 @@
                  [ring/ring-devel "1.4.0"]
                  [ch.qos.logback/logback-classic "1.1.3"]]
   :source-paths ["src/clj"]
+  :test-paths ["test/clj"]
   :java-source-paths ["src/java"]
   :javac-options ["-target" "1.7" "-source" "1.7" "-Xlint:-options"]
   
