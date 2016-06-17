@@ -1,15 +1,13 @@
-(ns job-streamer.agent.connector
-  (:require [clojure.tools.logging :as log])
-  (:use [clojure.core.async :only [chan put! go-loop <! timeout]]
-        [environ.core :only [env]])
+(ns job-streamer.agent.component.beacon
+  (:require [clojure.tools.logging :as log]
+            [clojure.core.async :refer [go-loop chan <! close! timeout put!]]
+            [com.stuartsierra.component :as component]
+            [environ.core :refer [env]])
   (:import [java.io ByteArrayOutputStream DataOutputStream File]
            [java.net InetSocketAddress InetAddress NetworkInterface]
            [java.nio ByteBuffer]
            [java.nio.file Files]
            [java.nio.channels DatagramChannel]))
-
-(def notifier-channel (chan))
-(def port-cache (atom nil))
 
 (defn write-address [address port stream]
   (doto stream
@@ -52,24 +50,37 @@
         (log/info "Notify broadcast."))
       (finally (.close ch)))))
 
-(defn start [port]
-  (reset! port-cache port)
+(defn beacon-loop [notifier-channel port]
   (go-loop []
-    (let [comm (<! notifier-channel)]
+    (when-let [comm (<! notifier-channel)]
       (if (= comm :stop)
         (log/info "stop broadcast.")
         (do
           (notify port)
           (<! (timeout 10000))
           (put! notifier-channel :continue)
-          (recur)))))
-  (put! notifier-channel :start))
+          (recur))))))
 
-(defn restart []
-  (if @port-cache
-    (start @port-cache)
-    (throw (IllegalStateException.))))
+(defrecord Beacon [port]
+  component/Lifecycle
 
-(defn stop []
-  (put! notifier-channel :stop))
+  (start [component]
+    (if (:main-loop component)
+      component
+      (let [notifier-channel (chan)
+            main-loop (beacon-loop notifier-channel port)]
+        (put! notifier-channel :start)
+        (assoc component
+               :main-loop main-loop
+               :notifier-channel notifier-channel))))
 
+  (stop [component]
+    (when-let [notifier-channel (:notifier-channel component)]
+      (put! notifier-channel :stop)
+      (close! notifier-channel))
+    (when-let [main-loop (:main-loop component)]
+      (close! main-loop))
+    (dissoc component :main-loop :notifier-channel)))
+
+(defn beacon-component [options]
+  (map->Beacon options))

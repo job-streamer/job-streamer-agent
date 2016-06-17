@@ -1,19 +1,21 @@
-(ns job-streamer.agent.spec
-  (:use [job-streamer.agent.runtime :only [job-operator]]))
+(ns job-streamer.agent.component.spec
+  (:require [com.stuartsierra.component :as component]
+            [liberator.core :as liberator])
+  (:import [java.lang.management ManagementFactory]))
 
-(defn running-executions []
+(defn running-executions [job-operator]
   (->> (.getJobNames job-operator)
        (map #(count (.getRunningExecutions job-operator %)))
        (reduce +)))
 
-(defn agent-spec []
-  (let [mx (java.lang.management.ManagementFactory/getOperatingSystemMXBean)]
+(defn agent-spec [{:keys [runtime]}]
+  (let [mx (ManagementFactory/getOperatingSystemMXBean)]
     (merge
      {:agent/os-name (.getName mx)
       :agent/os-version (.getVersion mx)
       :agent/cpu-arch (.getArch mx)
       :agent/cpu-core (.getAvailableProcessors mx)
-      :agent/jobs {:running (running-executions)}}
+      :agent/jobs {:running (running-executions (:job-operator runtime))}}
      (try
        (when (instance? (Class/forName "com.sun.management.OperatingSystemMXBean") mx)
          {:agent/stats
@@ -28,3 +30,22 @@
             :system  {:load (.getSystemCpuLoad mx)
                       :load-average (.getSystemLoadAverage mx)}}}})
        (catch ClassNotFoundException e)))))
+
+(defn spec-resource [spec]
+  (liberator/resource
+   :available-media-types ["application/edn"]
+   :handle-ok (fn [ctx]
+               (agent-spec spec))))
+
+
+(defrecord AgentSpec []
+  component/Lifecycle
+
+  (start [component]
+    component)
+
+  (stop [component]
+    component))
+
+(defn spec-component [options]
+  (map->AgentSpec options))
