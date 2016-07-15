@@ -19,7 +19,7 @@
   (let [baos (ByteArrayOutputStream.)
         dos  (DataOutputStream. baos)
         ch   (DatagramChannel/open)]
-    (try 
+    (try
       (doto dos
         (.write (.getAddress (InetAddress/getLocalHost)) 0 4)
         (.writeInt (int agent-port)))
@@ -92,7 +92,7 @@
         (.setServerUri (str "ws://" (.getHost uri) ":" (.getPort uri) "/wslog"))
         (.start))
       (.. (LoggerFactory/getLogger "root") (addAppender ws-appender)))
-    
+
     (reset!
      ws-handler
      (go-loop []
@@ -144,11 +144,13 @@
     (when-let [connector-loop (:connector-loop component)]
       (close! connector-loop))
     (when-let [ws-session (:ws-session component)]
-      (.close @ws-session))
+      (some-> @ws-session
+              (.close)))
     (when-let [ws-channel (:ws-channel component)]
       (close! ws-channel))
     (when-let [ws-handler (:ws-handler component)]
-      (close! @ws-handler))
+      (some-> @ws-handler
+              close!))
     (dissoc component :connector-loop :ws-hannel :ws-handler :ws-container :ws-session)))
 
 (defn connector-component [options]

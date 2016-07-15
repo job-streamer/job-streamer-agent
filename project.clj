@@ -15,7 +15,7 @@
 
                  [org.clojure/clojure "1.8.0"]
                  [com.stuartsierra/component "0.3.1"]
-                 [duct "0.8.0"]
+                 [duct "0.7.0"]
                  [meta-merge "1.0.0"]
 
                  [org.clojure/tools.logging "0.3.1"]
@@ -50,7 +50,7 @@
    :profiles/dev    {}
    :profiles/test   {}
    :profiles/docker {}
-   :project/dev   {:dependencies [[duct/generate "0.8.0"]
+   :project/dev   {:dependencies [[duct/generate "0.7.0"]
                                   [reloaded.repl "0.2.2"]
                                   [org.clojure/tools.namespace "0.2.11"]
                                   [org.clojure/tools.nrepl "0.2.12"]
