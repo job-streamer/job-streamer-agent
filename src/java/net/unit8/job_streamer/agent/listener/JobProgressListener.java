@@ -30,13 +30,16 @@ public class JobProgressListener extends AbstractJobListener {
     public void afterJob() {
         logger.debug("Send progress message... " + jobContext.getExecutionId());
 
-        Var wsChannel = RT.var("job-streamer.agent.core", "ws-channel");
-        IFn put = Clojure.var("clojure.core.async", "put!");
+        Var system = RT.var("reloaded.repl", "system");
+        Object connector = RT.get(system.get(), Keyword.intern("connector"));
+
+        IFn sendMessage = Clojure.var("job-streamer.agent.component.connector", "send-message");
+
         PersistentHashMap commandMap = PersistentHashMap.create(
                 Keyword.intern("command"), Keyword.intern("progress"),
                 Keyword.intern("id"), Long.parseLong(jobContext.getProperties().getProperty("request-id")),
                 Keyword.intern("execution-id"), jobContext.getExecutionId());
-        put.invoke(wsChannel.get(), commandMap);
+        sendMessage.invoke(connector, commandMap);
         logger.debug("Sent progress message:" + commandMap);
     }
 }

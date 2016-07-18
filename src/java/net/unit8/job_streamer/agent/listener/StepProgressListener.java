@@ -8,6 +8,7 @@ import javax.batch.api.listener.AbstractStepListener;
 import javax.batch.runtime.context.JobContext;
 import javax.batch.runtime.context.StepContext;
 import javax.inject.Inject;
+import java.util.Objects;
 
 /**
  * @author kawasima
@@ -21,39 +22,44 @@ public class StepProgressListener extends AbstractStepListener {
 
     @Override
     public void beforeStep() {
-        Var wsChannel = RT.var("job-streamer.agent.core", "ws-channel");
-        IFn put = Clojure.var("clojure.core.async", "put!");
+        Var system = RT.var("reloaded.repl", "system");
+        Object connector = RT.get(system.get(), Keyword.intern("connector"));
+        Object runtime   = RT.get(system.get(), Keyword.intern("runtime"));
 
-        Var instanceId = RT.var("job-streamer.agent.core", "instance-id");
+        IFn sendMessage = Clojure.var("job-streamer.agent.component.connector", "send-message");
+
+        Object instanceId = RT.get(runtime, Keyword.intern("instance-id"));
         MDC.put("stepExecutionId", Long.toString(stepContext.getStepExecutionId()));
-        MDC.put("instanceId", instanceId.get().toString());
+        MDC.put("instanceId", Objects.toString(instanceId));
 
         PersistentHashMap commandMap = PersistentHashMap.create(
                 Keyword.intern("command"), Keyword.intern("start-step"),
                 Keyword.intern("id"), Long.parseLong(jobContext.getProperties().getProperty("request-id")),
-                Keyword.intern("instance-id"), instanceId.get(),
+                Keyword.intern("instance-id"), instanceId,
                 Keyword.intern("execution-id"), jobContext.getExecutionId(),
                 Keyword.intern("step-name"), stepContext.getStepName(),
                 Keyword.intern("step-execution-id"), stepContext.getStepExecutionId());
 
-        put.invoke(wsChannel.get(), commandMap);
-
+        sendMessage.invoke(connector, commandMap);
     }
 
     @Override
     public void afterStep() {
         MDC.remove("stepExecutionId");
-        Var wsChannel = RT.var("job-streamer.agent.core", "ws-channel");
-        IFn put = Clojure.var("clojure.core.async", "put!");
 
-        Var instanceId = RT.var("job-streamer.agent.core", "instance-id");
+        Var system = RT.var("reloaded.repl", "system");
+        Object connector = RT.get(system.get(), Keyword.intern("connector"));
+        Object runtime   = RT.get(system.get(), Keyword.intern("runtime"));
+        IFn sendMessage = Clojure.var("job-streamer.agent.component.connector", "send-message");
+        Object instanceId = RT.get(runtime, Keyword.intern("instance-id"));
+
         PersistentHashMap commandMap = PersistentHashMap.create(
                 Keyword.intern("command"), Keyword.intern("progress-step"),
                 Keyword.intern("id"), Long.parseLong(jobContext.getProperties().getProperty("request-id")),
-                Keyword.intern("instance-id"), instanceId.get(),
+                Keyword.intern("instance-id"), instanceId,
                 Keyword.intern("execution-id"), jobContext.getExecutionId(),
                 Keyword.intern("step-execution-id"), stepContext.getStepExecutionId());
-        put.invoke(wsChannel.get(), commandMap);
+        sendMessage.invoke(connector, commandMap);
     }
 
 }

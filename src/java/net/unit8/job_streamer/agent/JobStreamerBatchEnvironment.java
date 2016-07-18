@@ -19,6 +19,7 @@ import org.jberet.se.ClassPathJobXmlResolver;
 import org.jberet.se._private.SEBatchLogger;
 import org.jberet.spi.ArtifactFactory;
 import org.jberet.spi.BatchEnvironment;
+import org.jberet.spi.JobTask;
 import org.jberet.spi.JobXmlResolver;
 import org.jberet.tools.ChainedJobXmlResolver;
 import org.jberet.tools.MetaInfBatchJobsJobXmlResolver;
@@ -100,7 +101,7 @@ public final class JobStreamerBatchEnvironment implements BatchEnvironment {
     }
 
     @Override
-    public void submitTask(final Runnable task) {
+    public void submitTask(final JobTask task) {
         executorService.submit(task);
     }
 
