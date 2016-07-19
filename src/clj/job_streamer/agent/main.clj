@@ -32,6 +32,5 @@
   (reset! system (new-system config))
   (println banner)
   (add-shutdown-hook ::stop-system #(component/stop @system))
-  (swap! system component/start)
-  (println (:connector @system)))
+  (swap! system component/start))
 
