@@ -25,8 +25,13 @@
 \\____/ \\___/|_.__/\\____/ \\__|_|  \\___|\\__,_|_| |_| |_|\\___|_|
   ")
 
+(def system
+  (atom nil))
+
 (defn -main [& args]
-  (let [system (new-system config)]
-    (println banner)
-    (add-shutdown-hook ::stop-system #(component/stop system))
-    (component/start system)))
+  (reset! system (new-system config))
+  (println banner)
+  (add-shutdown-hook ::stop-system #(component/stop @system))
+  (swap! system component/start)
+  (println (:connector @system)))
+
