@@ -10,6 +10,9 @@ import javax.batch.runtime.context.StepContext;
 import javax.inject.Inject;
 import java.util.Objects;
 
+import net.unit8.job_streamer.agent.util.SystemUtil;
+
+
 /**
  * @author kawasima
  */
@@ -22,9 +25,10 @@ public class StepProgressListener extends AbstractStepListener {
 
     @Override
     public void beforeStep() {
-        Var system = RT.var("reloaded.repl", "system");
-        Object connector = RT.get(system.get(), Keyword.intern("connector"));
-        Object runtime   = RT.get(system.get(), Keyword.intern("runtime"));
+        Object system = SystemUtil.getSystem();
+
+        Object connector = RT.get(system, Keyword.intern("connector"));
+        Object runtime   = RT.get(system, Keyword.intern("runtime"));
 
         IFn sendMessage = Clojure.var("job-streamer.agent.component.connector", "send-message");
 
@@ -47,9 +51,10 @@ public class StepProgressListener extends AbstractStepListener {
     public void afterStep() {
         MDC.remove("stepExecutionId");
 
-        Var system = RT.var("reloaded.repl", "system");
-        Object connector = RT.get(system.get(), Keyword.intern("connector"));
-        Object runtime   = RT.get(system.get(), Keyword.intern("runtime"));
+        Object system = SystemUtil.getSystem();
+
+        Object connector = RT.get(system, Keyword.intern("connector"));
+        Object runtime   = RT.get(system, Keyword.intern("runtime"));
         IFn sendMessage = Clojure.var("job-streamer.agent.component.connector", "send-message");
         Object instanceId = RT.get(runtime, Keyword.intern("instance-id"));
 
