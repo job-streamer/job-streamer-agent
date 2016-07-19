@@ -12,6 +12,8 @@ import javax.inject.Inject;
 import javax.persistence.spi.PersistenceProviderResolverHolder;
 import java.util.HashMap;
 
+import net.unit8.job_streamer.agent.util.SystemUtil;
+
 /**
  * @author kawasima
  */
@@ -30,8 +32,10 @@ public class JobProgressListener extends AbstractJobListener {
     public void afterJob() {
         logger.debug("Send progress message... " + jobContext.getExecutionId());
 
-        Var system = RT.var("reloaded.repl", "system");
-        Object connector = RT.get(system.get(), Keyword.intern("connector"));
+        Object system = SystemUtil.getSystem();
+        logger.debug("system:" + system);
+        Object connector = RT.get(system, Keyword.intern("connector"));
+        logger.debug("connector:" + connector);
 
         IFn sendMessage = Clojure.var("job-streamer.agent.component.connector", "send-message");
 
