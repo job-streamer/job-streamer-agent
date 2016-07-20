@@ -32,7 +32,7 @@
         ch   (DatagramChannel/open)]
     (try
       (doseq [interface (enumeration-seq (NetworkInterface/getNetworkInterfaces))]
-        (->> (.getInterfaceAddresses interface) 
+        (->> (.getInterfaceAddresses interface)
              (map #(.getAddress %))
              (filter #(and (instance? java.net.Inet4Address %)
                            (not (.isLoopbackAddress %))))
@@ -50,21 +50,32 @@
         (log/info "Notify broadcast."))
       (finally (.close ch)))))
 
+(defn stop-notifications [beacon]
+  (put! (:notifier-channel beacon) :stop))
+
+(defn start-notifications [beacon]
+  (put! (:notifier-channel beacon) :start))
+
 (defn beacon-loop [notifier-channel port]
-  (go-loop []
+  (go-loop [status :start]
     (when-let [comm (<! notifier-channel)]
-      (if (= comm :stop)
-        (log/info "stop broadcast.")
+      (case comm
+        :stop (do (log/info "stop broadcast.")
+                  (recur :stop))
+        :start (do (put! notifier-channel :continue)
+                   (recur :start))
         (do
-          (notify port)
-          (<! (timeout 10000))
-          (put! notifier-channel :continue)
-          (recur))))))
+          (when-not (= status :stop)
+            (notify port)
+            (<! (timeout 10000))
+            (put! notifier-channel :continue))
+          (recur status))))))
 
 (defrecord Beacon [port]
   component/Lifecycle
 
   (start [component]
+    (log/info "start beacon:" component)
     (if (:main-loop component)
       component
       (let [notifier-channel (chan)
@@ -75,8 +86,8 @@
                :notifier-channel notifier-channel))))
 
   (stop [component]
+    (log/info "stop beacon:" component)
     (when-let [notifier-channel (:notifier-channel component)]
-      (put! notifier-channel :stop)
       (close! notifier-channel))
     (when-let [main-loop (:main-loop component)]
       (close! main-loop))

@@ -42,31 +42,31 @@
 
 (defn agent-endpoint [{:keys [beacon runtime spec]} host port connecting?]
   (proxy [Endpoint] []
-    (onOpen [session config]
-      (component/stop beacon)
-      (.addMessageHandler
-       session
-       (proxy [StringMessageHandler] []
-         (onMessage [msg]
-           (handle-command (edn/read-string msg) session))))
-      (log/info "endpoint! runtime=" runtime)
-      (.. session
-          getAsyncRemote
-          (sendText (pr-str
-                     (merge {:command :ready
-                             :agent/instance-id (:instance-id runtime)
-                             :agent/name (.getHostName (InetAddress/getLocalHost))
-                             :agent/port port
-                             :agent/host host}
-                            (spec/agent-spec spec)))
-                    (reify javax.websocket.SendHandler
-                      (onResult [_ result]
-                        (when-not (.isOK result)
-                          (log/error (.getException result))))))))
-    (onClose [session close-reason]
-      (log/info "Closed by control bus. restart multicast.")
-      (reset! connecting? false)
-      (component/start beacon))))
+      (onOpen [session config]
+        (beacon/stop-notifications beacon)
+        (.addMessageHandler
+         session
+         (proxy [StringMessageHandler] []
+           (onMessage [msg]
+             (handle-command (edn/read-string msg) session))))
+        (log/info "endpoint! runtime=" runtime)
+        (.. session
+            getAsyncRemote
+            (sendText (pr-str
+                       (merge {:command :ready
+                               :agent/instance-id (:instance-id runtime)
+                               :agent/name (.getHostName (InetAddress/getLocalHost))
+                               :agent/port port
+                               :agent/host host}
+                              (spec/agent-spec spec)))
+                      (reify javax.websocket.SendHandler
+                        (onResult [_ result]
+                          (when-not (.isOK result)
+                            (log/error (.getException result))))))))
+      (onClose [session close-reason]
+        (log/info "Closed by control bus. restart multicast.")
+        (reset! connecting? false)
+        (beacon/start-notifications beacon))))
 
 (defn connect-to-bus [{:keys [runtime ws-handler ws-channel
                               ws-container ws-session] :as connector}

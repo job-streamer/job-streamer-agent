@@ -32,7 +32,7 @@
     (let [wscl (WebSocketClassLoader.
                 (str @base-url (when class-loader-id (str "?classLoaderId=" (.toString class-loader-id))))
                 (.getClassLoader (class tracer-bullet-fn)))]
-      (log/info "ClassLoader URL=" (str @base-url (when class-loader-id (str "?classLoaderId=" (.toString class-loader-id))))) 
+      (log/info "ClassLoader URL=" (str @base-url (when class-loader-id (str "?classLoaderId=" (.toString class-loader-id)))))
       (swap! classloaders assoc (or class-loader-id :default) wscl)
       wscl)))
 
@@ -119,14 +119,14 @@
              :abandon
              (do (log/info "Abandon " execution-id)
                  (.abandon job-operator execution-id))
-             
+
              :stop
              (do (log/info "Stop " execution-id)
                  (.stop job-operator execution-id))
 
              :restart
              (let [parameters (Properties.)
-                   loader (find-loader (get-in ctx [::data :class-loader-id]))]
+                   loader (find-loader runtime (get-in ctx [::data :class-loader-id]))]
                (doseq [[k v] (get-in ctx [::data :parameters])]
                  (.setProperty parameters (name k) (str v)))
                (let [execution-id (with-classloader loader
