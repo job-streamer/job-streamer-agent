@@ -15,7 +15,8 @@
       :agent/os-version (.getVersion mx)
       :agent/cpu-arch (.getArch mx)
       :agent/cpu-core (.getAvailableProcessors mx)
-      :agent/jobs {:running (running-executions (:job-operator runtime))}}
+      :agent/jobs {:running (running-executions (:job-operator runtime))}
+      :agent/agent-version (slurp "VERSION")}
      (try
        (when (instance? (Class/forName "com.sun.management.OperatingSystemMXBean") mx)
          {:agent/stats
