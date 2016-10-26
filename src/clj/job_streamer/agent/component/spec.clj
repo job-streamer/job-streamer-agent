@@ -8,14 +8,15 @@
        (map #(count (.getRunningExecutions job-operator %)))
        (reduce +)))
 
-(defn agent-spec [{:keys [runtime]}]
+(defn agent-spec [{:keys [runtime version]}]
   (let [mx (ManagementFactory/getOperatingSystemMXBean)]
     (merge
      {:agent/os-name (.getName mx)
       :agent/os-version (.getVersion mx)
       :agent/cpu-arch (.getArch mx)
       :agent/cpu-core (.getAvailableProcessors mx)
-      :agent/jobs {:running (running-executions (:job-operator runtime))}}
+      :agent/jobs {:running (running-executions (:job-operator runtime))}
+      :agent/agent-version version}
      (try
        (when (instance? (Class/forName "com.sun.management.OperatingSystemMXBean") mx)
          {:agent/stats
@@ -48,4 +49,8 @@
     component))
 
 (defn spec-component [options]
-  (map->AgentSpec options))
+  (map->AgentSpec (assoc options
+                         :version
+                         (-> (or (slurp "VERSION") "unknown")
+                             (clojure.string/split #"\n")
+                             first))))
