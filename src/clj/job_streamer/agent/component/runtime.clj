@@ -150,7 +150,8 @@
                                                :end-time (.getEndTime se)
                                                :step-execution-id (.getStepExecutionId se)
                                                :exit-status (.getExitStatus se)
-                                               :batch-status (keywordize-status se)}))
+                                               :batch-status (keywordize-status se)
+                                               :step (.getStepName se)}))
                                        (vec))})))
 
 (defn step-execution-resource [{:keys [job-operator]} execution-id step-execution-id]
