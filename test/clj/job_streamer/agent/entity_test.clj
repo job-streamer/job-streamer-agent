@@ -51,6 +51,21 @@
              :step/batchlet {:batchlet/ref "example.Batchlet3"}}]}],
          :step/batchlet {:batchlet/ref "example.Batchlet2"}}]}],
      :step/batchlet {:batchlet/ref "example.Batchlet1"}}], :job/properties nil})
+(def job4
+  {:job/name "chunk"
+   :job/components
+   [{:step/name "a"
+     :step/properties nil
+     :step/chunk
+     {:chunk/reader
+      {:reader/ref "reader1"}
+      :chunk/processor
+      {:processor/ref "processor1"}
+      :chunk/writer
+      {:writer/ref "writer1"}}}]
+   :job/properties nil})
+
+
 
 
 (deftest make-job-test
@@ -97,5 +112,13 @@
       (testing "The first 'next/to' of the second step is the identity of the second component."
         (is (= "step3" (:next/to (first (:transitions (second (:components job))))))))
       (testing "The first 'next/on' of the second step is as same as argument job."
-        (is (= "status2" (:next/on (first (:transitions (second (:components job)))))))))))
-
+        (is (= "status2" (:next/on (first (:transitions (second (:components job))))))))))
+  (testing "The chunk job contains refs"
+    (let [job (make-job job4)]
+      (println job)
+      (testing "First component has reader/ref"
+        (is (= "reader1" (:reader/ref (:chunk/reader (:chunk (first (:components job))))))))
+      (testing "First component has processor/ref"
+        (is (= "processor1" (:processor/ref (:chunk/processor (:chunk (first (:components job))))))))
+      (testing "First component has writer/ref"
+        (is (= "writer1" (:writer/ref (:chunk/writer (:chunk (first (:components job)))))))))))

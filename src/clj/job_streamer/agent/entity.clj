@@ -87,11 +87,11 @@
                          (filter #(second %))
                          (into {}))
              (when reader
-               (element :reader    {:ref (:ref reader)}))
+               (element :reader    {:ref (:reader/ref reader)}))
              (when processor
-               (element :processor {:ref (:ref processor)}))
+               (element :processor {:ref (:processor/ref processor)}))
              (when writer
-               (element :writer    {:ref (:ref writer)})))))
+               (element :writer    {:ref (:writer/ref writer)})))))
 
 (defn make-chunk [{:keys [chunk/reader chunk/processor chunk/writer chunk/checkpoint-policy chunk/commit-interval
                           chunk/buffer-reads chunk/chunk-size chunk/skip-limit chunk/retry-limit]}]
