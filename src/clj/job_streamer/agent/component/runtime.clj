@@ -57,6 +57,14 @@
   (keyword "batch-status"
            (.. execution getBatchStatus name toLowerCase)))
 
+(defn- param->edn [param]
+  (if param
+    (merge
+      {:all (.toString param)}
+      (map (fn[m] {(-> key keyword) (some-> m val .toString)}) (.getParameters param)))
+    nil))
+
+
 (defn jobs-resource [{:keys [job-operator] :as runtime}]
   (liberator/resource
    :available-media-types ["application/edn"]
@@ -144,6 +152,7 @@
                  :end-time   (.getEndTime execution)
                  :batch-status (keywordize-status execution)
                  :exit-status (.getExitStatus execution)
+                 :job-parameter (.getJobParameters (param->edn execution))
                  :step-executions (->> step-executions
                                        (map (fn [se]
                                               {:start-time (.getStartTime se)
