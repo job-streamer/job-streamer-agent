@@ -60,8 +60,8 @@
 (defn- param->edn [param]
   (if param
     (merge
-      {:all (.toString param)}
-      (map (fn[m] {(-> key keyword) (some-> m val .toString)}) (.getParameters param)))
+      {:all (some-> param .toString (.replace "=" ":") )}
+      (reduce (fn [m key] (assoc m (some-> key keyword) (some-> param (.getProperty key) .toString))) {} (.stringPropertyNames param)))
     nil))
 
 
@@ -143,7 +143,8 @@
                                  (.getJobExecution job-operator execution-id))]
                  {:execution-id execution-id
                   :batch-status (keywordize-status execution)
-                  :start-time   (.getStartTime execution)}))))
+                  :start-time   (.getStartTime execution)
+                  :job-parameter (some-> execution .getJobParameters param->edn)}))))
    :handle-created (fn [ctx]
                      (select-keys ctx [:execution-id :batch-status :start-time]))
    :handle-ok (fn [{execution :execution step-executions :step-executions}]
@@ -152,7 +153,7 @@
                  :end-time   (.getEndTime execution)
                  :batch-status (keywordize-status execution)
                  :exit-status (.getExitStatus execution)
-                 :job-parameter (.getJobParameters (param->edn execution))
+                 :job-parameter (some-> execution .getJobParameters param->edn)
                  :step-executions (->> step-executions
                                        (map (fn [se]
                                               {:start-time (.getStartTime se)
