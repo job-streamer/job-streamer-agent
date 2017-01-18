@@ -75,7 +75,6 @@
                                                  (into-array FileAttribute []))
                   parameters (Properties.)
                   loader (find-loader runtime (get-in ctx [::data :class-loader-id]))]
-              (println (-> (get-in ctx [::data :job]) add-listeners (add-request-id (str (get-in ctx [::data :request-id])))))
               (try
                 (spit (.toFile job-file) (-> (get-in ctx [::data :job]) add-listeners (add-request-id (str (get-in ctx [::data :request-id])))))
                 (doseq [[k v] (get-in ctx [::data :parameters])]
