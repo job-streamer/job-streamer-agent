@@ -6,7 +6,7 @@
             [environ.core :refer [env]]
             [com.stuartsierra.component :as component]
             [liberator.core :as liberator]
-            (job-streamer.agent [entity :refer [make-job to-xml]]))
+            (job-streamer.agent [entity :refer [add-listeners]]))
   (:import [java.util UUID Properties]
            [javax.batch.runtime BatchRuntime]
            [java.nio.file Files]
@@ -75,9 +75,9 @@
                                                  (into-array FileAttribute []))
                   parameters (Properties.)
                   loader (find-loader runtime (get-in ctx [::data :class-loader-id]))]
-              (println (get-in ctx [::data :job]))
+              (println add-listeners (get-in ctx [::data :job]))
               (try
-                (spit (.toFile job-file) (get-in ctx [::data :job]))
+                (spit (.toFile job-file) (add-listeners (get-in ctx [::data :job])))
                 (doseq [[k v] (get-in ctx [::data :parameters])]
                   (.setProperty parameters (name k) (str v)))
                 (let [execution-id (with-classloader loader
