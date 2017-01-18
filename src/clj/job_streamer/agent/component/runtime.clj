@@ -6,7 +6,7 @@
             [environ.core :refer [env]]
             [com.stuartsierra.component :as component]
             [liberator.core :as liberator]
-            (job-streamer.agent [entity :refer [add-listeners]]))
+            (job-streamer.agent [entity :refer [add-listeners add-request-id]]))
   (:import [java.util UUID Properties]
            [javax.batch.runtime BatchRuntime]
            [java.nio.file Files]
@@ -75,9 +75,9 @@
                                                  (into-array FileAttribute []))
                   parameters (Properties.)
                   loader (find-loader runtime (get-in ctx [::data :class-loader-id]))]
-              (println add-listeners (get-in ctx [::data :job]))
+              (println (-> (get-in ctx [::data :job]) add-listeners (add-request-id (str (get-in ctx [::data :request-id])))))
               (try
-                (spit (.toFile job-file) (add-listeners (get-in ctx [::data :job])))
+                (spit (.toFile job-file) (-> (get-in ctx [::data :job]) add-listeners (add-request-id (str (get-in ctx [::data :request-id])))))
                 (doseq [[k v] (get-in ctx [::data :parameters])]
                   (.setProperty parameters (name k) (str v)))
                 (let [execution-id (with-classloader loader
@@ -88,8 +88,7 @@
                                   (.getJobExecution job-operator execution-id))]
                   {:execution-id execution-id
                    :batch-status (keywordize-status execution)
-                   :start-time   (.getStartTime execution)})
-                (finally (Files/deleteIfExists job-file)))))
+                   :start-time   (.getStartTime execution)}))))
    :post-redirect? false
    :handle-created (fn [ctx]
                      (select-keys ctx [:execution-id :batch-status :start-time]))

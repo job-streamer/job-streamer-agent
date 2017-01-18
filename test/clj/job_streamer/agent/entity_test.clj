@@ -28,6 +28,6 @@
 <step id=\"2\">
  <batchlet ref=\"example.HelloBatch\"></batchlet>
 </step>
-</job>") "<!--?xml version=\"1.0\" encoding=\"UTF-8\"?-->\n<html>\n <head></head>\n <body>\n  <job id=\"2\"> \n   <step id=\"1\"> \n    <next on=\"*\" to=\"2\"></next> \n    <batchlet ref=\"example.HelloBatch\"></batchlet> \n    <Listeners>\n     <Listener ref=\"net.unit8.job_streamer.agent.listener.StepProgressListener\"></Listener>\n    </Listeners>\n   </step> \n   <step id=\"2\"> \n    <batchlet ref=\"example.HelloBatch\"></batchlet> \n    <Listeners>\n     <Listener ref=\"net.unit8.job_streamer.agent.listener.StepProgressListener\"></Listener>\n    </Listeners>\n   </step> \n   <Listeners>\n    <Listener ref=\"net.unit8.job_streamer.agent.listener.JobProgressListener\"></Listener>\n   </Listeners>\n  </job>\n </body>\n</html>"))))
+</job>") "<?xml version=\"1.0\" encoding=\"UTF-8\"?> \n<job id=\"2\"> \n <step id=\"1\"> \n  <next on=\"*\" to=\"2\"></next> \n  <batchlet ref=\"example.HelloBatch\"></batchlet> \n  <listeners>\n   <listener ref=\"net.unit8.job_streamer.agent.listener.StepProgressListener\"></listener>\n  </listeners>\n </step> \n <step id=\"2\"> \n  <batchlet ref=\"example.HelloBatch\"></batchlet> \n  <listeners>\n   <listener ref=\"net.unit8.job_streamer.agent.listener.StepProgressListener\"></listener>\n  </listeners>\n </step> \n <listeners>\n  <listener ref=\"net.unit8.job_streamer.agent.listener.JobProgressListener\"></listener>\n </listeners>\n</job>"))))
 
 
