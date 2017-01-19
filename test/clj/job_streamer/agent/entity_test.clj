@@ -1,20 +1,35 @@
 (ns job-streamer.agent.entity-test
   (:require [job-streamer.agent.entity :refer :all]
             [clojure.test :refer :all])
-  (:import  [org.jsoup Jsoup]))
+  (:import  [org.jsoup Jsoup]
+            [org.jsoup.parser Tag Parser]))
 
 (deftest has-listeners-test
   (testing "has listeners"
     (is (has-listeners?
- (Jsoup/parse "<step id=\"2\">
- <listeners></listeners>
- <batchlet ref=\"example.HelloBatch\"></batchlet>
-</step>")))
-    (testing "has no listeners"
-      (is (not (has-listeners?
- (Jsoup/parse "<step id=\"2\">
- <batchlet ref=\"example.HelloBatch\"></batchlet>
-</step>")))))))
+          (some-> (Jsoup/parse "<job id=\"2\">
+                               <step id=\"1\">
+                               <next on=\"*\" to=\"2\"></next>
+                               <listeners></listeners>
+                               <batchlet ref=\"example.HelloBatch\"></batchlet>
+                               </step>
+                               <step id=\"2\">
+                               <batchlet ref=\"example.HelloBatch\"></batchlet>
+                               </step>
+                               <listeners></listeners>
+                               </job>") (.getElementsByTag "job") first))))
+  (testing "has no listeners"
+    (is (not (has-listeners?
+               (some-> (Jsoup/parse "<job id=\"2\">
+                                    <step id=\"1\">
+                                    <next on=\"*\" to=\"2\"></next>
+                                    <listeners></listeners>
+                                    <batchlet ref=\"example.HelloBatch\"></batchlet>
+                                    </step>
+                                    <step id=\"2\">
+                                    <batchlet ref=\"example.HelloBatch\"></batchlet>
+                                    </step>
+                                    </job>") (.getElementsByTag "job") first))))))
 
 (deftest add-listeners-test
   (testing "add-listeners"

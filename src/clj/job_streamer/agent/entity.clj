@@ -5,7 +5,7 @@
            [org.jsoup.parser Tag Parser]))
 
 (defn has-listeners? [parent-element]
-               (some-> parent-element (.getElementsByTag "listeners") empty? not))
+               (some-> parent-element (.select (str (.tagName parent-element)" > listeners")) empty? not))
 
 (defn add-listener [parent-element listener-name]
  (when (not (has-listeners? parent-element))
@@ -21,8 +21,8 @@
                         (map #(add-listener % "net.unit8.job_streamer.agent.listener.StepProgressListener") parent))))
    (.toString jobxml)))
 
-(defn has-properties? [parent-element]
-  (some-> parent-element (.getElementsByTag "properties") empty? not))
+(defn has-listeners? [parent-element]
+               (some-> parent-element (.select (str (.tagName parent-element)" > properties")) empty? not))
 
 (defn add-property [parent-element id]
   (when (not (has-properties? parent-element))
