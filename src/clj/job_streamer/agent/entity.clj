@@ -21,7 +21,7 @@
                         (map #(add-listener % "net.unit8.job_streamer.agent.listener.StepProgressListener") parent))))
    (.toString jobxml)))
 
-(defn has-listeners? [parent-element]
+(defn has-properties? [parent-element]
                (some-> parent-element (.select (str (.tagName parent-element)" > properties")) empty? not))
 
 (defn add-property [parent-element id]
