@@ -6,7 +6,7 @@
             [environ.core :refer [env]]
             [com.stuartsierra.component :as component]
             [liberator.core :as liberator]
-            (job-streamer.agent [entity :refer [make-job to-xml]]))
+            (job-streamer.agent [entity :refer [add-listeners add-request-id]]))
   (:import [java.util UUID Properties]
            [javax.batch.runtime BatchRuntime]
            [java.nio.file Files]
@@ -73,13 +73,10 @@
    :post! (fn [ctx]
             (let [job-file (Files/createTempFile "job" ".xml"
                                                  (into-array FileAttribute []))
-                  job (-> (make-job (get-in ctx [::data :job]))
-                          (assoc-in [:properties :request-id]
-                                    (get-in ctx [::data :request-id])))
                   parameters (Properties.)
                   loader (find-loader runtime (get-in ctx [::data :class-loader-id]))]
               (try
-                (spit (.toFile job-file) (xml/emit-str (to-xml job)))
+                (spit (.toFile job-file) (-> (get-in ctx [::data :job]) add-listeners (add-request-id (str (get-in ctx [::data :request-id])))))
                 (doseq [[k v] (get-in ctx [::data :parameters])]
                   (.setProperty parameters (name k) (str v)))
                 (let [execution-id (with-classloader loader
@@ -90,8 +87,7 @@
                                   (.getJobExecution job-operator execution-id))]
                   {:execution-id execution-id
                    :batch-status (keywordize-status execution)
-                   :start-time   (.getStartTime execution)})
-                (finally (Files/deleteIfExists job-file)))))
+                   :start-time   (.getStartTime execution)}))))
    :post-redirect? false
    :handle-created (fn [ctx]
                      (select-keys ctx [:execution-id :batch-status :start-time]))
@@ -161,7 +157,7 @@
                                                :step-execution-id (.getStepExecutionId se)
                                                :exit-status (.getExitStatus se)
                                                :batch-status (keywordize-status se)
-                                               :step (.getStepName se)}))
+                                               :step-name (.getStepName se)}))
                                        (vec))})))
 
 (defn step-execution-resource [{:keys [job-operator]} execution-id step-execution-id]
