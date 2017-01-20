@@ -1,124 +1,48 @@
 (ns job-streamer.agent.entity-test
-  (:require [clojure.edn :as edn]
-            [clojure.test :refer [deftest testing is]]
-            [job-streamer.agent.entity :refer [make-job to-xml]]))
+  (:require [job-streamer.agent.entity :refer :all]
+            [clojure.test :refer :all])
+  (:import  [org.jsoup Jsoup]
+            [org.jsoup.parser Tag Parser]))
 
-(def job1
-  {:job/name "job1",
-   :job/components
-   [{:step/name "step1",
-     :step/properties nil,
-     :step/transitions
-     [{:next/on "status1",
-       :next/to
-       [{:step/name "step2",
-         :step/properties nil,
-         :step/batchlet {:batchlet/ref "example.Batchlet2"}}]}],
-     :step/batchlet {:batchlet/ref "example.Batchlet1"}}], :job/properties nil})
+(deftest has-listeners-test
+  (testing "has listeners"
+    (is (has-listeners?
+          (some-> (Jsoup/parse "<job id=\"2\">
+                               <step id=\"1\">
+                               <next on=\"*\" to=\"2\"></next>
+                               <listeners></listeners>
+                               <batchlet ref=\"example.HelloBatch\"></batchlet>
+                               </step>
+                               <step id=\"2\">
+                               <batchlet ref=\"example.HelloBatch\"></batchlet>
+                               </step>
+                               <listeners></listeners>
+                               </job>") (.getElementsByTag "job") first))))
+  (testing "has no listeners"
+    (is (not (has-listeners?
+               (some-> (Jsoup/parse "<job id=\"2\">
+                                    <step id=\"1\">
+                                    <next on=\"*\" to=\"2\"></next>
+                                    <listeners></listeners>
+                                    <batchlet ref=\"example.HelloBatch\"></batchlet>
+                                    </step>
+                                    <step id=\"2\">
+                                    <batchlet ref=\"example.HelloBatch\"></batchlet>
+                                    </step>
+                                    </job>") (.getElementsByTag "job") first))))))
 
-(def job2
-  {:job/name "job2",
-   :job/components
-   [{:step/name "step1",
-     :step/properties nil,
-     :step/transitions
-     [{:next/on "status1",
-       :next/to
-       [{:step/name "step2",
-         :step/properties nil,
-         :step/batchlet {:batchlet/ref "example.Batchlet2"}}]}
-      {:next/on "status2",
-       :next/to
-       [{:step/name "step3",
-         :step/properties nil,
-         :step/batchlet {:batchlet/ref "example.Batchlet3"}}]}],
-     :step/batchlet {:batchlet/ref "example.Batchlet1"}}], :job/properties nil})
-(def job3
-  {:job/name "job3",
-   :job/components
-   [{:step/name "step1",
-     :step/properties nil,
-     :step/transitions
-     [{:next/on "status1",
-       :next/to
-       [{:step/name "step2",
-         :step/properties nil,
-         :step/transitions
-         [{:next/on "status2",
-           :next/to
-           [{:step/name "step3",
-             :step/properties nil,
-             :step/batchlet {:batchlet/ref "example.Batchlet3"}}]}],
-         :step/batchlet {:batchlet/ref "example.Batchlet2"}}]}],
-     :step/batchlet {:batchlet/ref "example.Batchlet1"}}], :job/properties nil})
-(def job4
-  {:job/name "chunk"
-   :job/components
-   [{:step/name "a"
-     :step/properties nil
-     :step/chunk
-     {:chunk/reader
-      {:reader/ref "reader1"}
-      :chunk/processor
-      {:processor/ref "processor1"}
-      :chunk/writer
-      {:writer/ref "writer1"}}}]
-   :job/properties nil})
+(deftest add-listeners-test
+  (testing "add-listeners"
+    (is (= (add-listeners
+ "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<job id=\"2\">
+<step id=\"1\">
+ <next on=\"*\" to=\"2\"></next>
+ <batchlet ref=\"example.HelloBatch\"></batchlet>
+</step>
+<step id=\"2\">
+ <batchlet ref=\"example.HelloBatch\"></batchlet>
+</step>
+</job>") "<?xml version=\"1.0\" encoding=\"UTF-8\"?> \n<job id=\"2\"> \n <step id=\"1\"> \n  <next on=\"*\" to=\"2\"></next> \n  <batchlet ref=\"example.HelloBatch\"></batchlet> \n  <listeners>\n   <listener ref=\"net.unit8.job_streamer.agent.listener.StepProgressListener\"></listener>\n  </listeners>\n </step> \n <step id=\"2\"> \n  <batchlet ref=\"example.HelloBatch\"></batchlet> \n  <listeners>\n   <listener ref=\"net.unit8.job_streamer.agent.listener.StepProgressListener\"></listener>\n  </listeners>\n </step> \n <listeners>\n  <listener ref=\"net.unit8.job_streamer.agent.listener.JobProgressListener\"></listener>\n </listeners>\n</job>"))))
 
 
-
-
-(deftest make-job-test
-  (testing "The job contains only one next phrase"
-    (let [job (make-job job1)]
-      (testing "First component is a first step"
-        (is (= "step1" (:id (first (:components job))))))
-      (testing "Second component is a second step"
-        (is (= "step2" (:id (second (:components job))))))
-      (testing "The 'next/to' of the first step is the identity of the second component."
-        (is (= "step2" (:next/to (first (:transitions (first (:components job))))))))
-      (testing "The 'next/on' of the first step is as same as argument job."
-        (is (= "status1" (:next/on (first (:transitions (first (:components job))))))))))
-  (testing "The job contains more than one next phrase"
-    (let [job (make-job job2)]
-      (testing "First component is a first step"
-        (is (= "step1" (:id (first (:components job))))))
-      (testing "Second component is a second step"
-        (is (= "step2" (:id (second (:components job))))))
-      (testing "Third component is a third step"
-        (is (= "step3" (:id (nth (:components job) 2)))))
-      (testing "The first 'next/to' of the first step is the identity of the second component."
-        (is (= "step2" (:next/to (first (:transitions (first (:components job))))))))
-      (testing "The first 'next/on' of the first step is as same as argument job."
-        (is (= "status1" (:next/on (first (:transitions (first (:components job))))))))
-      (testing "The second 'next/to' of the first step is the identity of the second component."
-        (is (= "step3" (:next/to (second (:transitions (first (:components job))))))))
-      (testing "The second 'next/on' of the first step is as same as argument job."
-        (is (= "status2" (:next/on (second (:transitions (first (:components job))))))))))
-  (testing "The job contains nested next phrase"
-    (let [job (make-job job3)]
-      (testing "First component is a first step"
-        (is (= "step1" (:id (first (:components job))))))
-      (testing "Second component is a second step"
-        (is (= "step2" (:id (second (:components job))))))
-      ;error
-      (testing "Third component is a third step"
-        (is (= "step3" (:id (nth (:components job) 2)))))
-      (testing "The first 'next/to' of the first step is the identity of the second component."
-        (is (= "step2" (:next/to (first (:transitions (first (:components job))))))))
-      (testing "The first 'next/on' of the first step is as same as argument job."
-        (is (= "status1" (:next/on (first (:transitions (first (:components job))))))))
-      ;fail
-      (testing "The first 'next/to' of the second step is the identity of the second component."
-        (is (= "step3" (:next/to (first (:transitions (second (:components job))))))))
-      (testing "The first 'next/on' of the second step is as same as argument job."
-        (is (= "status2" (:next/on (first (:transitions (second (:components job))))))))))
-  (testing "The chunk job contains refs"
-    (let [job (make-job job4)]
-      (println job)
-      (testing "First component has reader/ref"
-        (is (= "reader1" (:reader/ref (:chunk/reader (:chunk (first (:components job))))))))
-      (testing "First component has processor/ref"
-        (is (= "processor1" (:processor/ref (:chunk/processor (:chunk (first (:components job))))))))
-      (testing "First component has writer/ref"
-        (is (= "writer1" (:writer/ref (:chunk/writer (:chunk (first (:components job)))))))))))

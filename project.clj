@@ -18,6 +18,7 @@
                  [duct "0.7.0"]
                  [meta-merge "1.0.0"]
 
+                 [org.jsoup/jsoup "1.10.2"]
                  [org.clojure/tools.logging "0.3.1"]
                  [org.clojure/data.xml "0.0.8"]
                  [org.clojure/core.async "0.2.374"]
