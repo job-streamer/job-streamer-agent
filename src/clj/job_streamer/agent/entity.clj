@@ -8,7 +8,7 @@
                (some-> parent-element (.select (str (.tagName parent-element)" > listeners")) empty? not))
 
 (defn add-listener [parent-element listener-name]
- (when (not (has-listeners? parent-element))
+ (when-not (has-listeners? parent-element)
    (.appendChild parent-element (Element. (Tag/valueOf "listeners") "")))
  (some-> parent-element (.getElementsByTag "listeners") first (.appendChild (some->  (Tag/valueOf "listener") (Element. "") (.attr "ref" listener-name)))))
 
@@ -25,9 +25,9 @@
                (some-> parent-element (.select (str (.tagName parent-element)" > properties")) empty? not))
 
 (defn add-property [parent-element id]
-  (when (not (has-properties? parent-element))
+  (when-not (has-properties? parent-element)
     (.appendChild parent-element (Element. (Tag/valueOf "properties") "")))
-  (some-> parent-element (.getElementsByTag "properties") first (.appendChild (some->  (Tag/valueOf "property") (Element. "") (.attr "name" "request-id") (.attr "value" id)))))
+  (some-> parent-element (.select "job > properties") first (.appendChild (some->  (Tag/valueOf "property") (Element. "") (.attr "name" "request-id") (.attr "value" id)))))
 
 (defn add-request-id [jobxml-str id]
   (let [jobxml (Jsoup/parse  jobxml-str "" (Parser/xmlParser))]
