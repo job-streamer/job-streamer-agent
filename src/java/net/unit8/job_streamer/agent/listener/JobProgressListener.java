@@ -2,6 +2,7 @@ package net.unit8.job_streamer.agent.listener;
 
 import clojure.java.api.Clojure;
 import clojure.lang.*;
+import org.slf4j.MDC;
 import net.unit8.job_streamer.agent.jpa.ApplicationPersistenceProviderResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,11 +26,13 @@ public class JobProgressListener extends AbstractJobListener {
 
     @Override
     public void beforeJob() {
+        MDC.put("jobExecutionId", Long.toString(jobContext.getExecutionId()));
         PersistenceProviderResolverHolder.setPersistenceProviderResolver(new ApplicationPersistenceProviderResolver());
     }
 
     @Override
     public void afterJob() {
+        MDC.remove("jobExecutionId");
         logger.debug("Send progress message... " + jobContext.getExecutionId());
 
         Object system = SystemUtil.getSystem();
