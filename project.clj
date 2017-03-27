@@ -23,7 +23,7 @@
                  [org.clojure/data.xml "0.0.8"]
                  [org.clojure/core.async "0.2.374"]
                  [environ "1.0.3"]
-                 [net.unit8.wscl/websocket-classloader "0.3.0"]
+                 [net.unit8.wscl/websocket-classloader "0.3.1"]
                  [net.unit8.logback/logback-websocket-appender "0.1.0"]
                  [io.undertow/undertow-websockets-jsr "1.3.22.Final"]
                  [liberator "0.14.1"]
