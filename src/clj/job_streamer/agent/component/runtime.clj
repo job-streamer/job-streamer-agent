@@ -87,7 +87,8 @@
                                   (.getJobExecution job-operator execution-id))]
                   {:execution-id execution-id
                    :batch-status (keywordize-status execution)
-                   :start-time   (.getStartTime execution)}))))
+                   :start-time   (.getStartTime execution)})
+                (finally (Files/deleteIfExists job-file)))))
    :post-redirect? false
    :handle-created (fn [ctx]
                      (select-keys ctx [:execution-id :batch-status :start-time]))
