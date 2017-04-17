@@ -65,14 +65,17 @@
     nil))
 
 
-(defn jobs-resource [{:keys [job-operator] :as runtime}]
+(defn jobs-resource [{:keys [job-operator job-xml-dir] :as runtime}]
   (liberator/resource
    :available-media-types ["application/edn"]
    :allowed-methods [:get :post]
    :malformed? #(parse-edn % ::data)
    :post! (fn [ctx]
-            (let [job-file (Files/createTempFile "job" ".xml"
-                                                 (into-array FileAttribute []))
+            (let [job-file (if job-xml-dir
+                             (Files/createTempFile (.toPath (io/file job-xml-dir)) "job" ".xml"
+                                                   (into-array FileAttribute []))
+                             (Files/createTempFile "job" ".xml"
+                                                   (into-array FileAttribute [])))
                   parameters (Properties.)
                   loader (find-loader runtime (get-in ctx [::data :class-loader-id]))]
               (try
@@ -178,7 +181,7 @@
                  :exit-status (.getExitStatus step-execution)
                  :step-name   (.getStepName step-execution)})))
 
-(defrecord JSR352Runtime [instance-id]
+(defrecord JSR352Runtime [instance-id job-xml-dir]
   component/Lifecycle
 
   (start [component]
@@ -193,4 +196,5 @@
 
 (defn runtime-component [options]
   (map->JSR352Runtime
-   {:instance-id (or (:instance-id options) default-instance-id)}))
+    {:instance-id (or (:instance-id options) default-instance-id)
+     :job-xml-dir (:job-xml-dir options)}))

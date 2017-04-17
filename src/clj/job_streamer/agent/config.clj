@@ -14,5 +14,5 @@
      :beacon    {:port port}
      :runtime {:instance-id (some-> (env :instance-name)
                                     (.getBytes)
-                                    (UUID/nameUUIDFromBytes))}}))
-
+                                    (UUID/nameUUIDFromBytes))
+               :job-xml-dir (env :job-xml-dir)}}))
