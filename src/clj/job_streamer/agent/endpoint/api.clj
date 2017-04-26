@@ -1,7 +1,7 @@
 (ns job-streamer.agent.endpoint.api
   (:require [clojure.tools.logging :as log]
             [clojure.core.async :refer [put!]]
-            [compojure.core :refer [ANY POST routes]]
+            [compojure.core :refer [ANY POST GET routes]]
             (job-streamer.agent.component
              [spec :as spec]
              [runtime :as runtime]
@@ -33,5 +33,6 @@
    (ANY ["/job-execution/:execution-id" :execution-id #"\d+"] [execution-id]
      (runtime/job-execution-resource runtime
                                      (Long/parseLong execution-id)))
-   (ANY "/spec" [] (spec/spec-resource spec))))
+   (ANY "/spec" [] (spec/spec-resource spec))
 
+   (GET "/healthcheck" [] (do {:status 200}))))
