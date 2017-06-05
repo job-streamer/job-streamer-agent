@@ -25,15 +25,17 @@
        (finally
          (.setContextClassLoader (Thread/currentThread) original-loader#)))))
 
+(def o (Object.))
+
 (defn find-loader [{:keys [classloaders base-url]} class-loader-id]
   (log/info "find-loader " class-loader-id)
-    (dosync (if-let [wscl (get @classloaders (or class-loader-id :default))]
+    (locking o (if-let [wscl (get @classloaders (or class-loader-id :default))]
       wscl
       (let [wscl (WebSocketClassLoader.
                   (str @base-url (when class-loader-id (str "?classLoaderId=" (.toString class-loader-id))))
                   (.getClassLoader (class tracer-bullet-fn)))]
-        (log/info "ClassLoader URL=" (str @base-url (when class-loader-id (str "?classLoaderId=" (.toString class-loader-id)))))
-        (alter classloaders assoc (or class-loader-id :default) wscl)
+        (log/debug "ClassLoader URL=" (str @base-url (when class-loader-id (str "?classLoaderId=" (.toString class-loader-id)))))
+        (swap! classloaders assoc (or class-loader-id :default) wscl)
         wscl))))
 
 (defn- body-as-string [ctx]
@@ -188,7 +190,7 @@
     (let [job-operator (BatchRuntime/getJobOperator)]
       (assoc component
              :job-operator job-operator
-             :classloaders (ref {})
+             :classloaders (atom {})
              :base-url     (atom nil))))
 
   (stop [component]
