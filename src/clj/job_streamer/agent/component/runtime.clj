@@ -34,7 +34,7 @@
       (let [wscl (WebSocketClassLoader.
                   (str @base-url (when class-loader-id (str "?classLoaderId=" (.toString class-loader-id))))
                   (.getClassLoader (class tracer-bullet-fn)))]
-        (log/debug "ClassLoader URL=" (str @base-url (when class-loader-id (str "?classLoaderId=" (.toString class-loader-id)))))
+        (log/info "ClassLoader URL=" (str @base-url (when class-loader-id (str "?classLoaderId=" (.toString class-loader-id)))))
         (swap! classloaders assoc (or class-loader-id :default) wscl)
         wscl))))
 
