@@ -4,6 +4,7 @@
             [clojure.pprint :refer :all]
             [clojure.test :refer :all]))
 
+; This test requires control-bus.
 (deftest runtime-test
   (testing "Multiple request"
     (let [runtime (component/start (runtime-component {:job-xml-dir "." :instance-id 12345}))
