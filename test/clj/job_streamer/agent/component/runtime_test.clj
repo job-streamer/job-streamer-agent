@@ -9,6 +9,7 @@
     (let [runtime (component/start (runtime-component {:job-xml-dir "." :instance-id 12345}))
           _ (reset! (:base-url runtime)
               (str "ws://localhost:45102/wscl"))
-          loarders (->> (take 50 (range))
+          loaders (->> (take 50 (range))
                         (pmap (fn [_] (find-loader runtime nil))))]
-      (is (every? #(= (first loarders) %) loarders)))))
+      (println (str "loader : ") (first loaders))
+      (is (every? #(= (first loaders) %) loaders)))))

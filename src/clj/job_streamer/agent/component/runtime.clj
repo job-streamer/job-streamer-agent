@@ -8,6 +8,7 @@
             [liberator.core :as liberator]
             (job-streamer.agent [entity :refer [add-listeners add-request-id]]))
   (:import [java.util UUID Properties]
+           [java.util.concurrent ConcurrentHashMap]
            [javax.batch.runtime BatchRuntime]
            [java.nio.file Files]
            [java.nio.file.attribute FileAttribute]
@@ -25,18 +26,21 @@
        (finally
          (.setContextClassLoader (Thread/currentThread) original-loader#)))))
 
-(def o (Object.))
+(defn create-loader [base-url class-loader-id]
+  (reify
+    java.util.function.Function
+    (apply [this arg]
+      (let [wscl (WebSocketClassLoader.
+                 (str @base-url (when class-loader-id (str "?classLoaderId=" (.toString class-loader-id))))
+                 (.getClassLoader (class tracer-bullet-fn)))]
+        (log/info "ClassLoader URL=" (str @base-url (when class-loader-id (str "?classLoaderId=" (.toString class-loader-id)))))
+        wscl))))
 
 (defn find-loader [{:keys [classloaders base-url]} class-loader-id]
   (log/info "find-loader " class-loader-id)
-    (locking o (if-let [wscl (get @classloaders (or class-loader-id :default))]
-      wscl
-      (let [wscl (WebSocketClassLoader.
-                  (str @base-url (when class-loader-id (str "?classLoaderId=" (.toString class-loader-id))))
-                  (.getClassLoader (class tracer-bullet-fn)))]
-        (log/info "ClassLoader URL=" (str @base-url (when class-loader-id (str "?classLoaderId=" (.toString class-loader-id)))))
-        (swap! classloaders assoc (or class-loader-id :default) wscl)
-        wscl))))
+  (.computeIfAbsent classloaders
+                    (or class-loader-id :default)
+                    (create-loader base-url class-loader-id)))
 
 (defn- body-as-string [ctx]
   (if-let [body (get-in ctx [:request :body])]
@@ -190,7 +194,7 @@
     (let [job-operator (BatchRuntime/getJobOperator)]
       (assoc component
              :job-operator job-operator
-             :classloaders (atom {})
+             :classloaders (ConcurrentHashMap.)
              :base-url     (atom nil))))
 
   (stop [component]
