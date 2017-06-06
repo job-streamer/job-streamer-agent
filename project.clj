@@ -35,7 +35,7 @@
   :source-paths ["src/clj"]
   :test-paths   ["test/clj"]
   :java-source-paths ["src/java"]
-  :javac-options ["-target" "1.7" "-source" "1.7" "-Xlint:-options"]
+  :javac-options ["-target" "1.8" "-source" "1.8" "-Xlint:-options"]
   :prep-tasks [["javac"] ["compile"]]
 
   :main ^:skip-aot job-streamer.agent.main
